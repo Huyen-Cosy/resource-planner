@@ -1,0 +1,46 @@
+# BACKLOG — Việc CỐ Ý hoãn (không phải thiếu sót)
+
+> Những mục dưới đây đã được cân nhắc và **chủ động hoãn** để giữ MVP gọn. Claude Code KHÔNG tự làm sớm các mục này khi build MVP — chúng làm phình phạm vi. Khi nào làm sẽ quyết riêng.
+
+## B1. Phân quyền theo vai trò (RBAC)
+**Là gì:** CEO/admin thấy rate + tiền; PM thường chỉ thấy người + effort, ẩn rate/margin.
+**Vì sao hoãn:** MVP là tool nội bộ tin cậy, dùng chung anon key + RLS mở. Phân quyền thật cần Supabase Auth + RLS theo user.
+**Khi làm:** khi tool mở rộng cho nhiều PM không nên thấy lương nhau. Supabase Auth bật thêm, không đập lại.
+**Lưu ý:** rate là dữ liệu nhạy cảm — mockup đã ghi chú "bản thật giới hạn quyền xem" ở các chỗ hiển thị rate.
+
+## B2. Đồng bộ allocation theo phase
+**Là gì:** khi dịch một phase (vd "modelling lùi 1 tháng"), allocation các role thuộc phase đó tự trượt theo.
+**Vì sao hoãn:** logic mapping phase↔allocation hai chiều phức tạp. Hiện sửa phase và sửa allocation độc lập.
+**Khi làm:** sau khi MVP ổn, nếu PM thấy thao tác dịch phase thủ công tốn công.
+
+## B3. Gán effort theo phase rồi rải xuống tháng
+**Là gì:** PM gõ "phase Build: DE×2" → hệ thống tự điền mọi tháng của phase. (Chiều bulk-input thứ 3.)
+**Vì sao hoãn:** cần liên kết phase↔allocation (như B2). Hiện đã có 2 chiều bulk: điền theo khoảng tháng + nhân bản từ dự án.
+**Khi làm:** cùng đợt với B2.
+
+## B4. Import nhân sự từ hệ thống HR
+**Là gì:** đồng bộ danh sách employees + rate từ HR thay vì nhập tay.
+**Vì sao hoãn:** MVP nhập tay đủ cho quy mô vài chục người. Import cần tích hợp riêng từng HR system.
+**Khi làm:** khi công ty đủ lớn / có HR system API.
+
+## B5. What-if nâng cao
+**Là gì:** hiện what-if mô phỏng 1 dự án giả định (margin + thiếu hụt). Nâng cao: lưu nhiều kịch bản, so sánh, mô phỏng "nếu dự án X trượt sang Q1".
+**Vì sao hoãn:** bản cơ bản đã trả lời câu hỏi chính ("có nên nhận thêm việc"). Nâng cao là tối ưu.
+
+## B6. Realtime subscription
+**Là gì:** web app tự cập nhật khi PM khác ghi (Supabase realtime).
+**Vì sao hoãn:** refresh thủ công đủ dùng; dữ liệu đổi vài lần/tháng. Realtime thêm phức tạp.
+
+## B7. Test phủ rộng
+**Vì sao hoãn ở MVP:** chỉ cần 1 script seed + kiểm tra query capacity/margin ra số đúng. Test đầy đủ sau khi cấu trúc ổn định.
+
+## B8. Tự động đồng bộ playbook giữa repo skill và Edge Function
+**Là gì:** hiện playbook nằm 2 nơi (repo skill cho Claude Code, hằng số trong Edge Function cho nút web), phải sửa cả 2 tay.
+**Vì sao hoãn:** MVP chưa có cả 2 cửa cùng lúc. Khi có, cân nhắc để Edge Function fetch playbook từ DB/repo.
+
+---
+## Tính năng đã CÓ trong mockup nhưng thuộc Phase sau MVP (nhắc để không build nhầm thứ tự)
+- Nút AI Generate + Edge Function llm-proxy + cấu hình AI model động → Phase 5.
+- Repo skill `/estimate` `/close` + vòng học norms → Phase 5.
+- Đính kèm tài liệu (Storage + trích text) → Phase 5.
+(MVP dùng nhập tay hoàn toàn — đường AI là lớp thêm sau, đúng tinh thần "AI là trang trí, không phải lõi".)

@@ -1,0 +1,64 @@
+# CLAUDE.md — Hướng dẫn cho Claude Code trên repo `resource-planner`
+
+> Đọc file này ĐẦU TIÊN mỗi phiên. Nó là bản đồ repo + luật chơi. Chi tiết sản phẩm nằm trong `docs/`.
+
+## TL;DR — đọc theo thứ tự này
+1. `docs/PROJECT-CONTEXT.md` — bắt nhịp 30 giây: đang làm gì, trạng thái.
+2. `docs/DECISIONS.md` — **lý do** 12 quyết định kiến trúc. Đây là lớp chống đi-lùi. Không được vi phạm.
+3. `docs/SPEC.md` — đặc tả đầy đủ: schema, view, 8 tab, kế hoạch phase, tiêu chí nghiệm thu. **Đây là nguồn chính khi build.**
+4. `docs/BACKLOG.md` — việc CỐ Ý hoãn. **Không tự làm sớm** các mục này.
+5. `docs/mockup.html` — đặc tả hành vi sống (bản v17). Mở bằng browser để xem tương tác thật.
+
+## Sản phẩm là gì (1 câu)
+Planning tool quản lý nguồn lực đa dự án cho công ty dịch vụ data: nhiều PM nhập kế hoạch (phase + nhu cầu role×tháng), tool tổng hợp thành bức tranh nguồn lực toàn công ty + tài chính kế hoạch, hỗ trợ CEO quyết định.
+
+## 5 luật không được phá (vi phạm = đi lùi, xem DECISIONS.md)
+1. **PLANNING, không phải TRACKING.** Cấm % hoàn thành, chi tiêu thực tới hôm nay, mốc "hôm nay", cờ quá hạn. Mọi thứ là kế hoạch dự kiến. (D1)
+2. **Granularity tháng × role.** Không theo tuần/ngày. (D2)
+3. **Gán người là OPTIONAL.** Mọi tính năng PHẢI chạy được khi chưa gán ai. Allocation mức role là lớp cơ bản; assignments mức cá nhân là lớp phủ thêm. (D3)
+4. **Rate theo CÁ NHÂN** (level + monthly/hourly), không theo role. **Margin tiền là thước đo lời/lỗ duy nhất** — đã bỏ "effort đã bán". (D4, D5)
+5. **Supabase = nguồn sự thật.** Mọi tính toán là SQL view (0 token vận hành). AI chỉ ở cửa estimation. Web app vanilla HTML/JS, không React/build pipeline. (D8, D9, D11)
+
+## Cấu trúc repo
+```
+resource-planner/
+├── CLAUDE.md              ← bạn đang đọc
+├── README.md             ← tóm tắt + checklist setup cho người mới
+├── .gitignore            ← .env* bị chặn (KHÔNG commit secret)
+├── docs/                 ← tài liệu thiết kế (đọc, đừng sửa khi đang code)
+│   ├── PROJECT-CONTEXT.md
+│   ├── DECISIONS.md
+│   ├── SPEC.md
+│   ├── BACKLOG.md
+│   └── mockup.html       ← bản v17, đặc tả hành vi
+├── db/                   ← Phase 1: schema.sql, seed.sql, views.sql
+├── web/                  ← Phase 2+: index.html (app thật, nối Supabase)
+└── supabase/functions/   ← Phase 5: Edge Function llm-proxy (SAU MVP)
+```
+Thư mục `db/`, `web/`, `supabase/functions/` hiện rỗng (chỉ có `.gitkeep`) — bạn dựng nội dung theo phase.
+
+## Kế hoạch build (tuần tự — chi tiết & tiêu chí nghiệm thu ở SPEC.md §8, §9)
+**MVP:**
+- **Phase 1** — `db/`: schema.sql + seed.sql + views + constraints. In hướng dẫn tạo Supabase project + chạy SQL.
+- **Phase 2** — `web/`: tab t1/t2/t3/t4(Cách 1 nhập tay)/t6. CRUD, bức tranh công ty, tài chính cơ bản, quản lý role/nhân sự/rate. Test bằng seed. Hướng dẫn deploy (Cloudflare Pages/Vercel).
+- **Phase 3** — gán người: t3 phần assign + t7 Nguồn lực cá nhân.
+- **Phase 4** — CEO: t0 (dư địa + what-if) + t5 (đóng dự án).
+
+**SAU MVP (Phase 5+ — KHÔNG làm khi build MVP):** Edge Function llm-proxy + nút AI Generate + cấu hình AI model động; repo skill `/estimate` `/close` + vòng học norms; đính kèm tài liệu (Storage + trích text). Đường AI là lớp trang trí thêm sau, MVP nhập tay hoàn toàn.
+
+## ⚠ Design delta cần hòa giải khi vào Phase 1 & 2 (mockup v17 mới hơn SPEC)
+Mockup v17 (bản gần nhất) đã thêm 3 ràng buộc ở luồng **t4 — Tạo dự án mới → Cách 1 (nhập tay)** mà SPEC.md (viết theo mockup v14) chưa phản ánh:
+1. **Khung tháng kế hoạch tách khỏi deadline.** Có control "± tháng" nới/thu khung tự do; `pDeadline` chỉ là vạch mốc tham chiếu (cột viền vàng), không còn là biên khóa cứng.
+2. **Allocation bị khóa ngoài phase.** Chỉ nhập được số ở tháng nằm trong một phase; ô ngoài phase bị disable (gạch chéo).
+3. **Phase phải liền mạch** (không gap) mới cho lưu; overlap thì được phép. Allocation vượt deadline chỉ cảnh báo, vẫn lưu.
+
+**Lưu ý quan trọng về schema:** ràng buộc (2)+(3) là **logic tầng UI lúc nhập liệu**, KHÔNG phải ràng buộc cứng ở DB. Schema SPEC (`phases` và `allocations` là 2 bảng độc lập, không FK ràng phase↔allocation) vẫn giữ nguyên — đừng thêm constraint DB ép allocation phải nằm trong phase. Lý do: BACKLOG B2/B3 cố ý hoãn việc đồng bộ phase↔allocation hai chiều ở tầng dữ liệu; v17 chỉ thêm *hỗ trợ nhập liệu* ở UI, không phải mô hình dữ liệu mới. Khi xây t4, bám mockup v17 cho hành vi UI; khi xây schema, bám SPEC. Nếu thấy mâu thuẫn khác giữa mockup và SPEC → **mockup đúng cho UI/tương tác** (D12), nhưng nêu rõ cho người dùng trước khi tự quyết những thứ động tới schema.
+
+## Quy ước làm việc
+- **Cuối mỗi phase:** commit + push, message mô tả phase (vd "Phase 1: schema + seed + views"). Tạo điểm khôi phục rõ ràng.
+- **Secret:** TUYỆT ĐỐI không commit `service_role` key, LLM API key, GitHub PAT vào bất kỳ file nào. `.gitignore` đã chặn `.env*`. Anon key của Supabase được phép nhúng trong `web/index.html` (theo thiết kế Supabase + RLS — xem SPEC §7).
+- **Khi đổi hướng thiết kế:** cập nhật `docs/DECISIONS.md` (và SPEC nếu cần) để Claude Chat và Claude Code không lệch. Đây là điểm đồng bộ chung giữa hai nơi.
+- **Ranh giới với Claude Chat:** việc "xây như thế nào" (schema, code, deploy, sửa lỗi) ở đây. Việc "nên xây cái gì, vì sao" (đổi thiết kế, thử UX trên mockup) thuộc Claude Chat. Nếu thấy mình đang được yêu cầu quyết định một thay đổi sản phẩm lớn → gợi ý người dùng chốt thiết kế ở Claude Chat trước.
+
+## Bắt đầu từ đâu
+Nếu repo chưa có gì trong `db/`: bắt đầu **Phase 1**. Đọc SPEC.md §4 (schema) + §9 (nghiệm thu), dựng `db/schema.sql`, `db/seed.sql`, `db/views.sql`, rồi in hướng dẫn tạo Supabase project và chạy SQL (Claude Code không tự đăng nhập Supabase của người dùng được — bước tạo project + chạy SQL là việc tay của họ).
