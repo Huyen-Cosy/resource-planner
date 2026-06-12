@@ -308,7 +308,11 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--moss);outline-of
   </div>
   <div class="card">
     <h2>Tài chính dự án <span class="tag">doanh thu vs burn chi phí kế hoạch</span></h2>
-    <div class="btnrow" style="margin:0 0 12px"><div><label style="margin-top:0">Chi phí khác ngoài lương (triệu — license, hạ tầng, thầu phụ...)</label><input type="number" id="otherCostInput" value="0" min="0" step="10" onchange="onOtherCost(this.value)" style="width:200px"></div></div>
+    <div class="btnrow" style="margin:0 0 12px;flex-wrap:wrap;gap:16px">
+      <div><label style="margin-top:0">Doanh thu hợp đồng (triệu)</label><input type="number" id="revInput" value="0" min="0" step="50" onchange="onRevenue(this.value)" style="width:160px"></div>
+      <div><label style="margin-top:0">Chi phí khác ngoài lương (triệu)</label><input type="number" id="otherCostInput" value="0" min="0" step="10" onchange="onOtherCost(this.value)" style="width:180px"></div>
+      <div><label style="margin-top:0">Management cost (% NS+khác — PO/Tech Lead/Data Lead)</label><input type="number" id="mgmtInput" value="10" min="0" max="100" step="1" onchange="onMgmtPct(this.value)" style="width:160px"></div>
+    </div>
     <div class="kpis" id="finKpis"></div>
     <div class="matrixwrap"><table class="matrix" id="finTable"></table></div>
     <p class="hint">Chi phí tháng = Σ chi phí từng người được gán (% × rate cá nhân). Slot chưa gán người → ước lượng theo rate trung bình của role. Rate cá nhân + level cấu hình ở tab Cấu hình (nhạy cảm — bản thật giới hạn quyền xem). Ô đỏ khi chi phí lũy kế vượt doanh thu.</p>
@@ -560,7 +564,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--moss);outline-of
 
 <script>
 /* =================== DỮ LIỆU DEMO =================== */
-const ANCHOR='2026-06';
+const ANCHOR='2026-03';
 const roleName={DE:'Data Engineer',DS:'Data Scientist',DA:'Data Analyst',PM:'Project Manager',PO:'Product Owner',DATA_LEAD:'Data Lead',ARCH:'Architecture Lead',LARK:'Lark Admin',FIN:'Finance Support',DESIGN:'Mockup Designer'};
 let ROLES=['DE','DS','DA','PM','PO','DATA_LEAD','ARCH','LARK','FIN','DESIGN'];
 let declaredCap={DE:4,DS:3,DA:4,PM:3,PO:2,DATA_LEAD:1,ARCH:1,LARK:1,FIN:1,DESIGN:1};
@@ -578,34 +582,25 @@ function empMonthlyCost(e){
 function levelDefaultCost(lv){return levelRate[lv]||45;}
 
 /* nhân sự thật — gán người là OPTIONAL */
-let empSeq=16;
+let empSeq=9;
+/* === ĐỘI ideaLAB — dự án Thanh Yến ===
+   Rate cấu hình theo yêu cầu PM:
+   - Hourly 200 nghìn/giờ (=200k/h). empMonthlyCost(hourly)=rate*160/1000 → 100% (8h/ngày)=32 tr/tháng.
+     4h/ngày = 50% effort = 16 tr/tháng · 1h/ngày = 12.5% = 4 tr/tháng.
+   - Tài: fix 30 tr/tháng, chỉ commit 50% → gán 50% (chi phí 15 tr/tháng).
+   - Vân: fix 20 tr/tháng, 100% trong giai đoạn build dashboard pilot (P3) + dashboard tập đoàn (P5).
+   - Trung(PO), Bách(Tech Lead), Dung(Data Lead): KHÔNG gán giờ — tính 'management cost' = 10%
+     tổng chi phí dự án (xem field mgmtPct của dự án). Để trong roster cho đủ đội, không allocate. */
 let employees=[
- {id:'e1',name:'Hùng',role:'DE',active:true,level:'Senior',rateType:'monthly',rate:72},
- {id:'e2',name:'Tuấn',role:'DE',active:true,level:'Middle',rateType:'monthly',rate:46},
- {id:'e3',name:'Khoa',role:'DE',active:true,level:'Junior',rateType:'monthly',rate:30},
- {id:'e4',name:'Nam',role:'DE',active:true,level:'Junior',rateType:'hourly',rate:180},
- {id:'e5',name:'Mai',role:'DS',active:true,level:'Senior',rateType:'monthly',rate:75},
- {id:'e6',name:'Linh',role:'DS',active:true,level:'Middle',rateType:'monthly',rate:50},
- {id:'e7',name:'Sơn',role:'DS',active:true,level:'Junior',rateType:'monthly',rate:32},
- {id:'e8',name:'Hà',role:'DA',active:true,level:'Middle',rateType:'monthly',rate:42},
- {id:'e9',name:'Quân',role:'DA',active:true,level:'Junior',rateType:'monthly',rate:28},
- {id:'e10',name:'Vy',role:'DA',active:true,level:'Junior',rateType:'monthly',rate:26},
- {id:'e11',name:'Đạt',role:'DA',active:true,level:'Intern',rateType:'hourly',rate:60},
- {id:'e12',name:'Hiếu',role:'PM',active:true,level:'Senior',rateType:'monthly',rate:65},
- {id:'e13',name:'Lan',role:'PM',active:true,level:'Senior',rateType:'monthly',rate:62},
- {id:'e14',name:'Minh',role:'PM',active:true,level:'Middle',rateType:'monthly',rate:48},
- {id:'e15',name:'Trang',role:'DATA_LEAD',active:true,level:'Lead',rateType:'monthly',rate:90},
- {id:'e16',name:'Phong',role:'ARCH',active:true,level:'Lead',rateType:'monthly',rate:95},
- /* === ĐỘI ideaLAB — dự án Thanh Yến (rate là GIẢ ĐỊNH, PM Base không có dữ liệu lương) === */
- {id:'e17',name:'Trung (PO)',role:'PO',active:true,level:'Lead',rateType:'monthly',rate:95},
- {id:'e18',name:'Huyên (PM)',role:'PM',active:true,level:'Senior',rateType:'monthly',rate:60},
- {id:'e19',name:'Bách (Tech Lead)',role:'ARCH',active:true,level:'Lead',rateType:'monthly',rate:90},
- {id:'e20',name:'Dung (Data Lead)',role:'DATA_LEAD',active:true,level:'Lead',rateType:'monthly',rate:88},
- {id:'e21',name:'Nhàn (Finance)',role:'FIN',active:true,level:'Middle',rateType:'monthly',rate:40},
- {id:'e22',name:'Vân (DA)',role:'DA',active:true,level:'Middle',rateType:'monthly',rate:42},
- {id:'e23',name:'Hiếu (Designer)',role:'DESIGN',active:true,level:'Middle',rateType:'monthly',rate:40},
- {id:'e24',name:'Tài (DE)',role:'DE',active:true,level:'Senior',rateType:'monthly',rate:55},
- {id:'e25',name:'Dõng (Lark Admin)',role:'LARK',active:true,level:'Middle',rateType:'monthly',rate:38}
+ {id:'e1',name:'Huyên (PM)',role:'PM',active:true,level:'Senior',rateType:'hourly',rate:200},
+ {id:'e2',name:'Dõng (Lark Admin)',role:'LARK',active:true,level:'Middle',rateType:'hourly',rate:200},
+ {id:'e3',name:'Nhàn (Finance)',role:'FIN',active:true,level:'Middle',rateType:'hourly',rate:200},
+ {id:'e4',name:'Tài (DE)',role:'DE',active:true,level:'Senior',rateType:'monthly',rate:30},
+ {id:'e5',name:'Vân (DA/BI)',role:'DA',active:true,level:'Middle',rateType:'monthly',rate:20},
+ {id:'e6',name:'Hiếu (Designer)',role:'DESIGN',active:true,level:'Middle',rateType:'hourly',rate:200},
+ {id:'e7',name:'Trung (PO)',role:'PO',active:true,level:'Lead',rateType:'hourly',rate:200},
+ {id:'e8',name:'Bách (Tech Lead)',role:'ARCH',active:true,level:'Lead',rateType:'hourly',rate:200},
+ {id:'e9',name:'Dung (Data Lead)',role:'DATA_LEAD',active:true,level:'Lead',rateType:'hourly',rate:200}
 ];
 function empName(id){const e=employees.find(x=>x.id===id);return e?e.name:'';}
 function empLabel(id){const e=empById(id);return e?`${e.name} · ${e.role} ${e.level||''}`.trim():'';}
@@ -627,7 +622,10 @@ function projCostMonth(p,i){
   return c;
 }
 function projCost(p){let c=0;months.forEach((m,i)=>{c+=projCostMonth(p,i);});return Math.round(c);}
-function projTotalCost(p){return projCost(p)+(+p.otherCost||0);}   /* + chi phí khác ngoài lương */
+/* management cost = % của (chi phí nhân sự + chi phí khác). Đại diện cho PO/Tech Lead/Data Lead
+   không tính giờ trực tiếp. mgmtPct mặc định 0 nếu dự án không khai báo. */
+function projMgmtCost(p){const base=projCost(p)+(+p.otherCost||0);return base*((+p.mgmtPct||0)/100);}
+function projTotalCost(p){return projCost(p)+(+p.otherCost||0)+projMgmtCost(p);}   /* NS + khác + management */
 function projMargin(p){return (+p.revenue||0)-projTotalCost(p);}
 function fmtM(v){return Math.round(v).toLocaleString('vi-VN');}
 /* danh sách role tham gia dự án: ưu tiên p.roles khai báo tường minh, fallback role có trong alloc */
@@ -640,30 +638,38 @@ function ensureRole(p,r){if(!p.roles)projRoles(p);if(!p.roles.includes(r))p.role
 function roleCapacity(r){const real=empsByRole(r).length;return real>0?real:(declaredCap[r]||0);}
 
 /* alloc: mảng index theo tháng tính từ ANCHOR; phases: [tên, thángBĐ, thángKT] (index) */
+/* === DỰ ÁN THẬT: Thanh Yến Treasury — nhập đầy đủ từ P0 (kickoff 30/03/2026 → bàn giao 14/06/2026, 11 tuần).
+   ANCHOR=2026-03 nên trục tháng = Mar(0) Apr(1) May(2) Jun(3). Phase quy về tháng (granularity tool=tháng):
+     P0 Discovery & Mockup     W1  (30/03-05/04) → Mar      [0,0]
+     P1 Data Struct.+Lark Pilot W2-3(06-19/04)   → Apr      [1,1]
+     P2 Data Integration       W4  (20-26/04)    → Apr      [1,1]
+     P3 Real Dashboard (Pilot) W5-6(27/04-10/05) → Apr-May  [1,2]
+     P4 Clean Data + Scale 14  W7-9(11-31/05)    → May      [2,2]
+     P5 Consolidate + UAT      W10-11(01-14/06)  → Jun      [3,3]
+   mgmtPct=10: Trung(PO)+Bách(TechLead)+Dung(DataLead) tính 10% tổng chi phí dự án (management cost). */
 let projects=[
- {id:'A',name:'Dashboard Power BI — Khách A',type:'BI_DASHBOARD',pm:'Hiếu',prio:'P1',start:'2026-06',end:'2026-12',status:'active',revenue:1450,otherCost:120,lastEdit:'Hiếu · 09/06 16:40',
-  phases:[['Xây dựng infrastructure (DWH)',0,0],['Data modelling',1,2],['Dashboard & visualize',3,4],['UAT & bàn giao',5,5]],
-  alloc:{DE:[2,1,1,0,0,0,0],DS:[0,2,2,0,0,0,0],DA:[0,0,0,2,2,1,0],PM:[.5,.5,.5,.5,.5,.5,.5],DATA_LEAD:[.5,.5,.5,.5,.5,0,0],ARCH:[.3,.3,0,0,0,0,0]},
-  assign:{DE:[{e1:100,e2:100},{e1:100},{e1:80},{},{},{},{}],DS:[{},{e5:100,e6:100},{e5:100,e6:100},{},{},{},{}],DA:[{},{},{},{e8:50,e9:100},{e8:50,e9:100},{e8:50},{}],PM:[{e12:50},{e12:50},{e12:50},{e12:50},{e12:50},{e12:50},{e12:50}]}},
- {id:'B',name:'Data Migration — Ngân hàng B',type:'DATA_MIGRATION',pm:'Lan',prio:'P1',start:'2026-07',end:'2026-10',status:'active',revenue:700,otherCost:80,lastEdit:'Lan · 10/06 09:15',
-  phases:[['Khảo sát & mapping dữ liệu',1,1],['Migration & kiểm thử',2,3],['Đối soát & bàn giao',4,4]],
-  alloc:{DE:[0,3,2,0,0,0,0],DA:[0,0,1,1,1,0,0],PM:[0,.5,.5,.5,.5,0,0],PO:[0,.5,.5,.5,0,0,0],DATA_LEAD:[0,.5,.5,0,0,0,0],ARCH:[0,.3,.3,0,0,0,0]},
-  assign:{DE:[{},{e2:100,e3:100,e4:100},{e1:60,e3:100},{},{},{},{}],DA:[{},{},{e8:50},{e8:50},{},{},{}],PM:[{},{e13:50},{e13:50},{e13:50},{e13:50},{},{}]}},
- {id:'C',name:'DWH Retail — Khách C',type:'DWH_BUILD',pm:'Minh',prio:'P2',start:'2026-07',end:'2026-11',status:'active',revenue:1250,otherCost:150,lastEdit:'Minh · 08/06 17:02',
-  phases:[['Xây dựng DWH',1,2],['Data modelling',3,4],['Báo cáo vận hành',5,6]],
-  alloc:{DE:[0,2,2,2,2,1,0],DS:[0,0,0,1,0,0,0],DA:[0,0,0,0,0,1,1],PM:[0,.5,.5,.5,.5,.5,.5],PO:[0,.5,.5,.5,.5,.5,.5],DATA_LEAD:[0,0,0,0,0,.5,0]},
-  assign:{DE:[{},{e4:100},{e4:100},{e3:100},{e3:100},{e2:100},{}],PM:[{},{e14:50},{e14:50},{e14:50},{e14:50},{e14:50},{e14:50}]}},
- /* === DỰ ÁN THẬT: Thanh Yến Treasury (phần còn lại từ T6 — tool chặn start<2026-06 nên P0–P2 đã xong không nhập được) === */
- {id:'TY',name:'Thanh Yến Treasury — Quản trị Khoản vay',type:'BI_DASHBOARD',pm:'Huyên',prio:'P1',start:'2026-06',end:'2026-07',status:'active',revenue:0,otherCost:0,lastEdit:'Huyên · nhập tay (test)',
-  roles:['LARK','DE','DA','DESIGN','FIN','PM','DATA_LEAD','ARCH','PO'],
-  phases:[['P3+P4: Dashboard pilot + Scale 14 cty',0,0],['P5: Consolidate + UAT + Handover',1,1]],
-  alloc:{LARK:[1,0.5],DE:[1,0],DA:[1,0.5],DESIGN:[0.3,0],FIN:[0.3,0.2],PM:[0.5,0.5],DATA_LEAD:[0.3,0],ARCH:[0.3,0],PO:[0.2,0.2]},
-  assign:{LARK:[{e25:100},{e25:50}],DE:[{e24:100},{}],DA:[{e22:100},{e22:50}],DESIGN:[{e23:30},{}],FIN:[{e21:30},{e21:20}],PM:[{e18:50},{e18:50}],DATA_LEAD:[{e20:30},{}],ARCH:[{e19:30},{}],PO:[{e17:20},{e17:20}]}}
+ {id:'TY',name:'Thanh Yến Treasury — Hệ thống Quản trị Dòng tiền',type:'BI_DASHBOARD',pm:'Huyên',prio:'P1',
+  start:'2026-03',end:'2026-06',status:'active',revenue:0,otherCost:0,mgmtPct:10,lastEdit:'Huyên · nhập tay (test)',
+  roles:['PM','LARK','FIN','DE','DA','DESIGN'],
+  phases:[['P0 · Discovery & Mockup',0,0],['P1 · Data Structuring + Lark Base (Pilot)',1,1],['P2 · Data Integration',1,1],['P3 · Real Dashboard (Pilot)',1,2],['P4 · Clean Data + Scale 14 cty',2,2],['P5 · Consolidate + UAT',3,3]],
+  alloc:{
+    PM:[0.5,0.5,0.5,0.5],          /* Huyên — 200k/h × 4h/ngày = 50% suốt dự án */
+    LARK:[0,0.5,0.5,0.25],         /* Dõng — 4h/ngày: P1 setup (Apr) + P4 scale (May) + handover (Jun) */
+    FIN:[0.125,0.125,0.125,0.125], /* Nhàn — 200k/h × 1h/ngày = 12.5% review tài chính xuyên suốt */
+    DE:[0,0.5,0.5,0.5],            /* Tài — fix 30tr/tháng, commit 50%: P2 ETL → P5 tuning */
+    DA:[0,1,1,1],                  /* Vân — fix 20tr/tháng, 100% trong P3 (pilot) + P5 (tập đoàn) */
+    DESIGN:[0.5,0.25,0,0]          /* Hiếu — 200k/h: mockup 5 dashboard ở P0 (giả định, user chỉnh được) */
+  },
+  assign:{
+    PM:[{e1:50},{e1:50},{e1:50},{e1:50}],
+    LARK:[{},{e2:50},{e2:50},{e2:25}],
+    FIN:[{e3:12.5},{e3:12.5},{e3:12.5},{e3:12.5}],
+    DE:[{},{e4:50},{e4:50},{e4:50}],
+    DA:[{},{e5:100},{e5:100},{e5:100}],
+    DESIGN:[{e6:50},{e6:25},{},{}]
+  }}
 ];
-const otherProjects=[
- {name:'Báo cáo tài chính tự động',type:'BI_DASHBOARD',pm:'Hiếu',prio:'P3',time:'01/2026 → 04/2026',status:'closed'},
- {name:'Consulting Data Strategy — D',type:'CONSULTING',pm:'Lan',prio:'P3',time:'10/2026 → 12/2026',status:'draft'}
-];
+const otherProjects=[];
 
 /* AI models — admin setup sẵn, PM chọn dùng */
 let models=[
@@ -824,7 +830,7 @@ function renderProjects(){
 }
 
 /* ===== Tab 3 — chi tiết dự án đang chọn ===== */
-let cur='A';
+let cur='TY';
 function openProject(id){cur=id;renderDetail();go('t3');}
 function renderDetail(){
   const p=projects.find(x=>x.id===cur)||projects[0];cur=p.id;
@@ -1032,24 +1038,30 @@ function applyQF3(){
 }
 function renderFinance(p){
   const box=document.getElementById('finKpis');if(!box)return;
-  const laborCost=projCost(p),other=+p.otherCost||0,cost=laborCost+other,rev=p.revenue||0,margin=rev-cost,pct=rev?Math.round(margin/rev*100):0;
+  const laborCost=projCost(p),other=+p.otherCost||0,mgmt=projMgmtCost(p),cost=laborCost+other+mgmt,rev=p.revenue||0,margin=rev-cost,pct=rev?Math.round(margin/rev*100):0;
   box.innerHTML=
     `<div class="kpi"><div class="v">${fmtM(rev)}</div><div class="l">doanh thu hợp đồng (triệu)</div></div>`+
-    `<div class="kpi"><div class="v">${fmtM(cost)}</div><div class="l">tổng chi phí (NS ${fmtM(laborCost)} + khác ${fmtM(other)})</div></div>`+
+    `<div class="kpi"><div class="v">${fmtM(cost)}</div><div class="l">tổng chi phí (NS ${fmtM(laborCost)} + khác ${fmtM(other)} + mgmt ${fmtM(mgmt)})</div></div>`+
     `<div class="kpi ${margin<0?'bad':'good'}"><div class="v">${fmtM(margin)}</div><div class="l">margin kế hoạch (triệu)</div></div>`+
     `<div class="kpi ${pct<10?'bad':'good'}"><div class="v">${pct}%</div><div class="l">tỷ suất margin</div></div>`;
-  /* ô nhập chi phí khác */
+  /* đồng bộ các ô nhập (không ghi đè khi user đang gõ) */
   const oc=document.getElementById('otherCostInput');
   if(oc&&document.activeElement!==oc)oc.value=other;
+  const rv=document.getElementById('revInput');
+  if(rv&&document.activeElement!==rv)rv.value=rev;
+  const mg=document.getElementById('mgmtInput');
+  if(mg&&document.activeElement!==mg)mg.value=(+p.mgmtPct||0);
   const s=mDiff(ANCHOR,p.start),e=Math.min(mDiff(ANCHOR,p.end),months.length-1);
   let h='<thead><tr><th></th>';for(let i=s;i<=e;i++)h+=`<th class="m">${mLabel(i)}</th>`;h+='</tr></thead><tbody>';
   let cum=0;
   let r1='<tr><td class="role"><b>Chi phí NS tháng</b><small>triệu VND</small></td>',
-      r2='<tr><td class="role"><b>Lũy kế (gồm CP khác)</b></td>',
+      r2='<tr><td class="role"><b>Lũy kế (NS+khác+mgmt)</b></td>',
       r3='<tr><td class="role"><b>% doanh thu đã burn</b></td>';
   for(let i=s;i<=e;i++){
     const c=projCostMonth(p,i);cum+=c;
-    const cumTotal=cum+other;  /* chi phí khác tính một lần vào lũy kế */
+    /* management phân bổ theo tỷ lệ chi phí NS đã burn → ô cuối = đúng tổng chi phí dự án */
+    const mgmtSoFar=laborCost>0?mgmt*(cum/laborCost):0;
+    const cumTotal=cum+other+mgmtSoFar;
     const over=rev&&cumTotal>rev;
     r1+=`<td class="cell ok">${c?fmtM(c):'·'}</td>`;
     r2+=`<td class="cell ${over?'short':'ok'}">${fmtM(cumTotal)}</td>`;
@@ -1058,6 +1070,8 @@ function renderFinance(p){
   document.getElementById('finTable').innerHTML=h+r1+'</tr>'+r2+'</tr>'+r3+'</tr></tbody>';
 }
 function onOtherCost(val){const p=projects.find(x=>x.id===cur);p.otherCost=parseFloat(String(val).replace(',','.'))||0;markEdited(p);renderFinance(p);renderProjects();refreshCompany();}
+function onRevenue(val){const p=projects.find(x=>x.id===cur);p.revenue=parseFloat(String(val).replace(',','.'))||0;markEdited(p);renderFinance(p);renderProjects();refreshCompany();renderCEO&&renderCEO();}
+function onMgmtPct(val){const p=projects.find(x=>x.id===cur);p.mgmtPct=parseFloat(String(val).replace(',','.'))||0;markEdited(p);renderFinance(p);renderProjects();refreshCompany();}
 function renderSoldNote(p,total){
   const el=document.getElementById('soldNote');
   total=Math.round(total*10)/10;
@@ -1122,9 +1136,9 @@ function onCloseEdit(inp){
 
 /* ===== Tab 0 — Tổng quan CEO (planning) ===== */
 let auditLog=[
-  {who:'Lan',what:'sửa phân bổ DE — Data Migration',when:'10/06 09:15'},
-  {who:'Minh',what:'kéo dài DWH Retail thêm 1 tháng',when:'08/06 17:02'},
-  {who:'Hiếu',what:'tạo dự án Dashboard Power BI',when:'06/06 14:20'}
+  {who:'Huyên',what:'nhập phân bổ Thanh Yến từ P0 (Discovery) → P5 (UAT)',when:'hôm nay'},
+  {who:'Huyên',what:'cấu hình rate đội ideaLAB + management cost 10%',when:'hôm nay'},
+  {who:'Huyên',what:'tạo dự án Thanh Yến Treasury',when:'hôm nay'}
 ];
 function logAudit(who,what){auditLog.unshift({who,what,when:'hôm nay'});if(auditLog.length>20)auditLog.pop();}
 function ceoList(){return projects.filter(p=>document.getElementById('ceoScope').value==='all'?p.status!=='closed':p.status==='active');}
@@ -1731,7 +1745,7 @@ function saveManual(){
 }
 
 /* khởi tạo */
-buildMonths();refreshCompany();renderProjects();renderDetail();selectClose('A');renderRoles();renderCap();renderEmpCrud();renderModels();renderEmp('e1');renderManual();renderCEO();
+buildMonths();refreshCompany();renderProjects();renderDetail();selectClose('TY');renderRoles();renderCap();renderEmpCrud();renderModels();renderEmp('e1');renderManual();renderCEO();
 </script>
 </body>
 </html>
