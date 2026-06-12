@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resource Planner — Mockup v3</title>
+<title>Resource Planner — Mockup v17</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@600;700&display=swap" rel="stylesheet">
 <style>
@@ -11,6 +11,7 @@
   --paper:#F5F6F2; --card:#FFFFFF; --ink:#20261F; --muted:#6B7268;
   --line:#DDE0D8; --moss:#0E6B52; --moss-soft:#E3F0EA;
   --alert:#C03A2B; --alert-soft:#F9E8E5; --idle:#B07A12; --idle-soft:#F7EEDA;
+  --warn:#C2890A; --warn-soft:#FBF1D8;
   --radius:10px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -220,7 +221,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--moss);outline-of
   <div class="card" style="border-color:var(--moss)">
     <h2>Mô phỏng "nếu nhận thêm dự án" (what-if) <span class="tag">không lưu — chỉ thử</span></h2>
     <div class="btnrow" style="margin-top:0;align-items:flex-end;flex-wrap:wrap">
-      <div><label style="margin-top:0">Tháng bắt đầu</label><input type="month" id="wfStart" value="2026-09" max="2030-12"></div>
+      <div><label style="margin-top:0">Tháng bắt đầu</label><input type="month" id="wfStart" value="2026-09" min="2026-06" max="2030-12"></div>
       <div><label style="margin-top:0">Số tháng</label><input type="number" id="wfDur" value="5" min="1" max="24" style="width:70px"></div>
       <div><label style="margin-top:0">Doanh thu (triệu)</label><input type="number" id="wfRev" value="800" min="0" step="50" style="width:120px"></div>
       <button class="btn ai" onclick="runWhatIf()">▶ Mô phỏng</button>
@@ -365,8 +366,8 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--moss);outline-of
       <div><label>Tên dự án</label><input type="text" id="pName" value="Dashboard vận hành kho — Khách E"></div>
       <div><label>Loại dự án</label><select id="pType"><option>BI_DASHBOARD</option><option>DWH_BUILD</option><option>DATA_MIGRATION</option><option>CONSULTING</option><option>OTHER</option></select></div>
       <div><label>PM phụ trách</label><input type="text" id="pPM" value="Hiếu"></div>
-      <div><label>Tháng bắt đầu</label><input type="month" id="pStart" value="2026-08" max="2030-12" onchange="onStartChange()"></div>
-      <div><label>Deadline cứng (nếu có) <span class="tag" style="font-weight:400">chỉ là mốc tham chiếu</span></label><input type="month" id="pDeadline" value="2026-12" max="2030-12" onchange="renderManual()"></div>
+      <div><label>Tháng bắt đầu</label><input type="month" id="pStart" value="2026-08" min="2026-06" max="2030-12" onchange="onStartChange()"></div>
+      <div><label>Deadline cứng (nếu có) <span class="tag" style="font-weight:400">chỉ là mốc tham chiếu</span></label><input type="month" id="pDeadline" value="2026-12" min="2026-06" max="2030-12" onchange="renderManual()"></div>
       <div><label>Mức ưu tiên</label><select id="pPrio"><option>P1 — cam kết hợp đồng</option><option selected>P2 — quan trọng</option><option>P3 — linh hoạt</option></select></div>
     </div>
     <div class="grid3">
@@ -457,7 +458,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--moss);outline-of
       <tbody></tbody>
     </table>
     </div>
-    <label>Thực tế kết thúc tháng</label><input type="month" value="2027-01" style="max-width:220px">
+    <label>Thực tế kết thúc tháng</label><input type="month" value="2027-01" min="2026-06" max="2030-12" style="max-width:220px">
     <label>Bài học chính (close note)</label>
     <textarea>Khách mới chưa từng có DWH — khảo sát nguồn dữ liệu tốn gấp đôi dự kiến. Lần sau: với khách chưa có hạ tầng data, nhân hệ số 1.5 cho phase infrastructure.</textarea>
     <div class="btnrow">
@@ -511,7 +512,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--moss);outline-of
       <div><label style="margin-top:0">Level</label><select id="newEmpLevel" style="width:auto"></select></div>
       <button class="btn primary" onclick="addEmployee()">+ Thêm nhân sự</button>
     </div>
-    <p class="hint">Mỗi người có rate riêng: chọn <b>monthly</b> (triệu/tháng, cho nhân sự fulltime) hoặc <b>hourly</b> (nghìn/giờ, cho freelancer/part-time — quy đổi ${HOURS_PER_MONTH}h/tháng). "Số thực có" trong bảng năng lực tự đếm từ danh sách này. Dữ liệu rate nhạy cảm — bản thật giới hạn quyền xem.</p>
+    <p class="hint">Mỗi người có rate riêng: chọn <b>monthly</b> (triệu/tháng, cho nhân sự fulltime) hoặc <b>hourly</b> (nghìn/giờ, cho freelancer/part-time — quy đổi 160h/tháng). "Số thực có" trong bảng năng lực tự đếm từ danh sách này. Dữ liệu rate nhạy cảm — bản thật giới hạn quyền xem.</p>
   </div>
 
   <div class="grid2">
@@ -555,7 +556,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--moss);outline-of
   </div>
 </div>
 <div class="toast" id="toast"></div>
-<div class="mockbanner">MOCKUP v3 · dữ liệu demo tương tác</div>
+<div class="mockbanner">MOCKUP v17 · dữ liệu demo tương tác</div>
 
 <script>
 /* =================== DỮ LIỆU DEMO =================== */
@@ -630,22 +631,22 @@ function roleCapacity(r){const real=empsByRole(r).length;return real>0?real:(dec
 
 /* alloc: mảng index theo tháng tính từ ANCHOR; phases: [tên, thángBĐ, thángKT] (index) */
 let projects=[
- {id:'A',name:'Dashboard Power BI — Khách A',type:'BI_DASHBOARD',pm:'Hiếu',prio:'P1',start:'2026-06',end:'2026-12',status:'active',sold:21,revenue:1450,otherCost:120,lastEdit:'Hiếu · 09/06 16:40',
+ {id:'A',name:'Dashboard Power BI — Khách A',type:'BI_DASHBOARD',pm:'Hiếu',prio:'P1',start:'2026-06',end:'2026-12',status:'active',revenue:1450,otherCost:120,lastEdit:'Hiếu · 09/06 16:40',
   phases:[['Xây dựng infrastructure (DWH)',0,0],['Data modelling',1,2],['Dashboard & visualize',3,4],['UAT & bàn giao',5,5]],
   alloc:{DE:[2,1,1,0,0,0,0],DS:[0,2,2,0,0,0,0],DA:[0,0,0,2,2,1,0],PM:[.5,.5,.5,.5,.5,.5,.5],DATA_LEAD:[.5,.5,.5,.5,.5,0,0],ARCH:[.3,.3,0,0,0,0,0]},
   assign:{DE:[{e1:100,e2:100},{e1:100},{e1:80},{},{},{},{}],DS:[{},{e5:100,e6:100},{e5:100,e6:100},{},{},{},{}],DA:[{},{},{},{e8:50,e9:100},{e8:50,e9:100},{e8:50},{}],PM:[{e12:50},{e12:50},{e12:50},{e12:50},{e12:50},{e12:50},{e12:50}]}},
- {id:'B',name:'Data Migration — Ngân hàng B',type:'DATA_MIGRATION',pm:'Lan',prio:'P1',start:'2026-07',end:'2026-10',status:'active',sold:12,revenue:700,otherCost:80,lastEdit:'Lan · 10/06 09:15',
+ {id:'B',name:'Data Migration — Ngân hàng B',type:'DATA_MIGRATION',pm:'Lan',prio:'P1',start:'2026-07',end:'2026-10',status:'active',revenue:700,otherCost:80,lastEdit:'Lan · 10/06 09:15',
   phases:[['Khảo sát & mapping dữ liệu',1,1],['Migration & kiểm thử',2,3],['Đối soát & bàn giao',4,4]],
   alloc:{DE:[0,3,2,0,0,0,0],DA:[0,0,1,1,1,0,0],PM:[0,.5,.5,.5,.5,0,0],PO:[0,.5,.5,.5,0,0,0],DATA_LEAD:[0,.5,.5,0,0,0,0],ARCH:[0,.3,.3,0,0,0,0]},
   assign:{DE:[{},{e2:100,e3:100,e4:100},{e1:60,e3:100},{},{},{},{}],DA:[{},{},{e8:50},{e8:50},{},{},{}],PM:[{},{e13:50},{e13:50},{e13:50},{e13:50},{},{}]}},
- {id:'C',name:'DWH Retail — Khách C',type:'DWH_BUILD',pm:'Minh',prio:'P2',start:'2026-07',end:'2026-11',status:'active',sold:18,revenue:1250,otherCost:150,lastEdit:'Minh · 08/06 17:02',
+ {id:'C',name:'DWH Retail — Khách C',type:'DWH_BUILD',pm:'Minh',prio:'P2',start:'2026-07',end:'2026-11',status:'active',revenue:1250,otherCost:150,lastEdit:'Minh · 08/06 17:02',
   phases:[['Xây dựng DWH',1,2],['Data modelling',3,4],['Báo cáo vận hành',5,6]],
   alloc:{DE:[0,2,2,2,2,1,0],DS:[0,0,0,1,0,0,0],DA:[0,0,0,0,0,1,1],PM:[0,.5,.5,.5,.5,.5,.5],PO:[0,.5,.5,.5,.5,.5,.5],DATA_LEAD:[0,0,0,0,0,.5,0]},
   assign:{DE:[{},{e4:100},{e4:100},{e3:100},{e3:100},{e2:100},{}],PM:[{},{e14:50},{e14:50},{e14:50},{e14:50},{e14:50},{e14:50}]}}
 ];
 const otherProjects=[
- {name:'Báo cáo tài chính tự động',type:'BI_DASHBOARD',pm:'Hiếu',prio:'P3',time:'01/2026 → 04/2026',sold:'8',status:'closed'},
- {name:'Consulting Data Strategy — D',type:'CONSULTING',pm:'Lan',prio:'P3',time:'10/2026 → 12/2026',sold:'5',status:'draft'}
+ {name:'Báo cáo tài chính tự động',type:'BI_DASHBOARD',pm:'Hiếu',prio:'P3',time:'01/2026 → 04/2026',status:'closed'},
+ {name:'Consulting Data Strategy — D',type:'CONSULTING',pm:'Lan',prio:'P3',time:'10/2026 → 12/2026',status:'draft'}
 ];
 
 /* AI models — admin setup sẵn, PM chọn dùng */
@@ -803,7 +804,7 @@ function renderProjects(){
       const mg=pct===null?'—':`<span style="color:${pct<0?'var(--alert)':pct<10?'var(--idle)':'var(--moss)'}">${pct}%</span>`;
       return `<tr class="rowlink" onclick="openProject('${p.id}')"><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.pm}</td><td class="prio">${p.prio}</td><td class="mono" style="font-size:12px">${fmt(p)}</td><td class="mono" style="font-size:12px">${mg}</td><td>${badge[p.status]}</td></tr>`;
     }).join('')+
-    otherProjects.map(p=>`<tr class="rowlink"><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.pm}</td><td class="prio">${p.prio}</td><td class="mono" style="font-size:12px">${p.time}</td><td class="mono" style="font-size:12px">—</td><td>${badge[p.status]}</td></tr>`).join('');
+    otherProjects.map(p=>`<tr style="color:var(--muted)" title="Dự án ${p.status==='draft'?'nháp':'đã đóng'} — chưa có trang chi tiết để mở"><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.pm}</td><td class="prio">${p.prio}</td><td class="mono" style="font-size:12px">${p.time}</td><td class="mono" style="font-size:12px">—</td><td>${badge[p.status]}</td></tr>`).join('');
 }
 
 /* ===== Tab 3 — chi tiết dự án đang chọn ===== */
@@ -816,8 +817,8 @@ function renderDetail(){
   document.getElementById('projRange3').textContent=fmtYM(p.start)+' → '+fmtYM(p.end);
   /* điều khiển thời gian dự án — sửa được, kéo dài sang năm sau */
   document.getElementById('timeCtl').innerHTML=
-    `<div><label style="margin-top:0">Tháng bắt đầu</label><input type="month" value="${p.start}" max="2030-12" onchange="setProjStart('${p.id}',this.value)"></div>`+
-    `<div><label style="margin-top:0">Tháng kết thúc</label><input type="month" value="${p.end}" max="2030-12" onchange="setProjEnd('${p.id}',this.value)"></div>`+
+    `<div><label style="margin-top:0">Tháng bắt đầu</label><input type="month" value="${p.start}" min="${ANCHOR}" max="2030-12" onchange="setProjStart('${p.id}',this.value)"></div>`+
+    `<div><label style="margin-top:0">Tháng kết thúc</label><input type="month" value="${p.end}" min="${ANCHOR}" max="2030-12" onchange="setProjEnd('${p.id}',this.value)"></div>`+
     `<button class="btn sm" onclick="extendProj('${p.id}',3)">+3 tháng</button>`+
     `<button class="btn sm" onclick="extendProj('${p.id}',12)">+1 năm</button>`;
   /* gantt động theo cửa sổ dự án */
@@ -845,7 +846,9 @@ function renderDetail(){
   document.getElementById('phaseEdit').innerHTML=pe+'</tbody></table><p class="hint">Đổi tháng phase → Gantt vẽ lại ngay. (Đồng bộ allocation theo phase: backlog Phase 2.)</p>';
   renderAlloc(p);
 }
-function setProjStart(id,v){const p=projects.find(x=>x.id===id);if(mDiff(v,p.end)<0)p.end=v;p.start=v;refreshCompany();renderDetail();markEdited(p);}
+function setProjStart(id,v){const p=projects.find(x=>x.id===id);
+  if(mDiff(ANCHOR,v)<0){toast('Tháng bắt đầu không thể trước mốc kế hoạch ('+fmtYM(ANCHOR)+')','warn');renderDetail();return;}
+  if(mDiff(v,p.end)<0)p.end=v;p.start=v;refreshCompany();renderDetail();markEdited(p);}
 function setProjEnd(id,v){const p=projects.find(x=>x.id===id);if(mDiff(p.start,v)<0){toast('Tháng kết thúc phải sau tháng bắt đầu','warn');renderDetail();return;}p.end=v;refreshCompany();renderDetail();markEdited(p);}
 function extendProj(id,k){const p=projects.find(x=>x.id===id);p.end=mAdd(p.end,k);refreshCompany();renderDetail();markEdited(p);toast('Đã kéo dài đến '+fmtYM(p.end)+' — nhớ bấm Lưu');}
 function setPhase(id,sel){
@@ -1178,6 +1181,7 @@ function renderWfRoles(){
 function runWhatIf(){
   const start=document.getElementById('wfStart').value,dur=+document.getElementById('wfDur').value||1;
   const s=mDiff(ANCHOR,start),rev=+document.getElementById('wfRev').value||0;
+  if(s<0){toast('Tháng bắt đầu mô phỏng không thể trước mốc kế hoạch ('+fmtYM(ANCHOR)+')','warn');return;}
   const alloc={};ROLES.forEach(r=>{const el=document.getElementById('wf-'+r);const v=el?+el.value||0:0;if(v>0){alloc[r]=[];for(let k=0;k<dur;k++)alloc[r][s+k]=v;}});
   const wf={id:'WF',name:'(mô phỏng)',type:'OTHER',pm:'?',prio:'P3',start,end:mAdd(start,dur-1),status:'active',revenue:rev,otherCost:0,roles:Object.keys(alloc),alloc,assign:{}};
   const keep=pending;pending=wf;buildMonths();normalizeAlloc();
@@ -1500,7 +1504,7 @@ function closeModal(){document.getElementById('modal').style.display='none';}
 let manual={phases:[],alloc:{}};
 let manualDur=null;            /* số tháng kế hoạch — null = chưa khởi tạo, suy từ deadline */
 function labAbs(i){const ym=mAdd(ANCHOR,i);return 'T'+(+ym.split('-')[1])+'/'+ym.slice(2,4);}
-function deadlineIdx(){const d=fval('pDeadline');if(!d)return null;const i=mDiff(ANCHOR,d);return i>=0?i:null;}
+function deadlineIdx(){const d=fval('pDeadline');if(!d)return null;const i=mDiff(ANCHOR,d);const[s]=manualRange();return i>=s?i:null;} /* deadline trước tháng bắt đầu → bỏ qua, không phải mốc hợp lệ */
 function defaultDur(){ /* số tháng suy từ start→deadline, tối thiểu 3 */
   const start=fval('pStart')||'2026-08',end=fval('pDeadline');
   if(!end||mDiff(start,end)<0)return 5;
@@ -1512,14 +1516,25 @@ function manualRange(){
   const s=Math.max(mDiff(ANCHOR,start),0);
   return [s,s+manualDur-1];
 }
-function onStartChange(){manualDur=null;renderManual();} /* đổi start → reset khung về mặc định */
+/* dọn allocation & phase rơi NGOÀI khung [s..e] (cả dưới s lẫn trên e) — trả về số ô có số bị bỏ */
+function clampManualToRange(){
+  const[s,e]=manualRange();let dropped=0;
+  for(const r in manual.alloc)manual.alloc[r]=(manual.alloc[r]||[]).map((v,i)=>{
+    if((i<s||i>e)&&+v>0){dropped++;return 0;}return v;});
+  manual.phases=manual.phases.map(ph=>[ph[0],Math.min(Math.max(ph[1],s),e),Math.min(Math.max(ph[2],s),e)]);
+  return dropped;
+}
+function onStartChange(){ /* đổi start → reset khung về mặc định + dọn số rơi ngoài khung mới (tránh allocation "ma" vẫn bị cộng/lưu) */
+  manualDur=null;manualRange();
+  const dropped=clampManualToRange();
+  renderManual();
+  if(dropped)toast(`Đổi tháng bắt đầu — đã bỏ ${dropped} ô phân bổ rơi ngoài khung mới`,'warn');
+}
 function bumpMonths(d){
   if(manualDur==null)manualDur=defaultDur();
   manualDur=Math.max(1,manualDur+d);
   /* thu khung → dọn allocation & phase rơi ngoài khung mới */
-  const[s,e]=manualRange();
-  for(const r in manual.alloc)manual.alloc[r]=(manual.alloc[r]||[]).map((v,i)=>i>e?0:v);
-  manual.phases=manual.phases.map(ph=>[ph[0],Math.min(ph[1],e),Math.min(ph[2],e)]);
+  clampManualToRange();
   renderManual();
 }
 /* tháng i có nằm trong phase nào không (để khóa ô ngoài phase) */
@@ -1618,8 +1633,11 @@ function cloneToManual(){
     manual.alloc[r]=[];
     src.alloc[r].forEach((v,i)=>{const ni=s+(i-srcS);if(+v>0&&ni>=s&&ni<=e)manual.alloc[r][ni]=+v;});
   }
+  /* luật v17: chỉ giữ số trong phạm vi phase — dọn ô rơi ngoài phase do dự án nguồn (vd PM ở tháng bảo hành ngoài mọi phase) */
+  let pruned=0;
+  for(const r in manual.alloc)(manual.alloc[r]||[]).forEach((v,i)=>{if(+v>0&&!inAnyPhase(i)){manual.alloc[r][i]=0;pruned++;}});
   renderManual();
-  toast('Đã nhân bản phase + allocation từ "'+src.name.split(' — ')[0]+'" — chỉnh lệch rồi lưu');
+  toast('Đã nhân bản phase + allocation từ "'+src.name.split(' — ')[0]+'"'+(pruned?` — bỏ ${pruned} ô ngoài phase`:'')+' — chỉnh lệch rồi lưu',pruned?'warn':'');
 }
 function pruneOutsidePhase(){ /* xóa allocation rơi ra ngoài phase sau khi sửa/xóa phase */
   for(const r in manual.alloc)(manual.alloc[r]||[]).forEach((v,i)=>{if(+v>0&&!inAnyPhase(i))manual.alloc[r][i]=0;});
