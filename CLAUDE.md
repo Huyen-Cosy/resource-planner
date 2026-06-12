@@ -25,7 +25,7 @@ resource-planner/
 ├── CLAUDE.md              ← bạn đang đọc
 ├── README.md             ← tóm tắt + checklist setup cho người mới
 ├── .gitignore            ← .env* bị chặn (KHÔNG commit secret)
-├── docs/                 ← tài liệu thiết kế (đọc, đừng sửa khi đang code)
+├── docs/                 ← tài liệu thiết kế (được sửa — khi đổi hướng nhớ cập nhật DECISIONS.md cùng đợt)
 │   ├── PROJECT-CONTEXT.md
 │   ├── DECISIONS.md
 │   ├── SPEC.md
@@ -58,7 +58,7 @@ Mockup v17 (bản gần nhất) đã thêm 3 ràng buộc ở luồng **t4 — T
 - **Cuối mỗi phase:** commit + push, message mô tả phase (vd "Phase 1: schema + seed + views"). Tạo điểm khôi phục rõ ràng.
 - **Secret:** TUYỆT ĐỐI không commit `service_role` key, LLM API key, GitHub PAT vào bất kỳ file nào. `.gitignore` đã chặn `.env*`. Anon key của Supabase được phép nhúng trong `web/index.html` (theo thiết kế Supabase + RLS — xem SPEC §7).
 - **Khi đổi hướng thiết kế:** cập nhật `docs/DECISIONS.md` (và SPEC nếu cần) để Claude Chat và Claude Code không lệch. Đây là điểm đồng bộ chung giữa hai nơi.
-- **Ranh giới với Claude Chat:** việc "xây như thế nào" (schema, code, deploy, sửa lỗi) ở đây. Việc "nên xây cái gì, vì sao" (đổi thiết kế, thử UX trên mockup) thuộc Claude Chat. Nếu thấy mình đang được yêu cầu quyết định một thay đổi sản phẩm lớn → gợi ý người dùng chốt thiết kế ở Claude Chat trước.
+- **Sửa thiết kế & mockup:** Claude Code ĐƯỢC PHÉP đổi thiết kế, sửa mockup, thử UX trực tiếp tại đây — không cần chuyển qua Claude Chat. Điều kiện duy nhất: khi đổi hướng thiết kế, cập nhật `docs/DECISIONS.md` (và SPEC nếu cần) ngay trong cùng đợt sửa để mọi session sau không lệch.
 
 ## Bắt đầu từ đâu
 Nếu repo chưa có gì trong `db/`: bắt đầu **Phase 1**. Đọc SPEC.md §4 (schema) + §9 (nghiệm thu), dựng `db/schema.sql`, `db/seed.sql`, `db/views.sql`, rồi in hướng dẫn tạo Supabase project và chạy SQL (Claude Code không tự đăng nhập Supabase của người dùng được — bước tạo project + chạy SQL là việc tay của họ).

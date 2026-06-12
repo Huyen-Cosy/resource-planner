@@ -50,3 +50,15 @@
 ## D12. Mockup là đặc tả hành vi (sống qua 14 phiên)
 **Vì sao:** mô tả UX bằng lời luôn thiếu sót; mockup định nghĩa chính xác từng tương tác.
 **Hệ quả:** khi spec và mockup khác nhau → mockup đúng cho UI/tương tác. Giữ mockup trong repo, Claude Code đối chiếu khi build.
+
+## D13. Claude Code được sửa thiết kế & mockup trực tiếp (bỏ ranh giới Chat/Code)
+**Vì sao:** mockup là code sẽ tái dùng khi build (D11) — bug để lại trong mockup chảy thẳng vào app thật. Đợt test 3 vai (CEO/PM/Admin, 06/2026) cho thấy vá tại chỗ trong Claude Code nhanh và kiểm chứng được bằng test harness, không cần vòng qua Claude Chat.
+**Hệ quả:** mọi thay đổi thiết kế/mockup làm được ngay tại Claude Code. Ràng buộc duy nhất: cập nhật DECISIONS.md (và SPEC nếu cần) cùng đợt sửa. CLAUDE.md đã bỏ mục "ranh giới với Claude Chat".
+
+## D14. Phán quyết PO sau đợt test mockup v17 (06/2026) — các hành vi chốt không sửa
+**Vì sao:** đợt test 29 case tìm ra 8 fail; 6 nhóm blocker đã vá vào mockup (allocation "ma" khi đổi tháng bắt đầu, crash start trước mốc trục, clone tạo số trong ô khóa, CSS --warn thiếu, template literal lộ, dữ liệu `sold` chết). Các mục còn lại được cân nhắc và CHỐT như sau, để session sau không "sửa nhầm":
+- **Nhân sự "Nghỉ" vẫn tính tải & chi phí** cho assignment đã gán — đúng bản chất planning (kế hoạch đã cam kết người đó). Phase 3 bổ sung CẢNH BÁO "X đã nghỉ nhưng còn được gán Tx–Ty", không tự xóa assignment.
+- **Hai khái niệm "rảnh" cố ý khác nhau:** t0 "dư địa" tính theo allocation (mức role), t6 "còn trống" tính theo gán người (mức cá nhân) — đúng 2 lớp của D3. Khi build chỉ thêm 1 câu chú thích ở t6, không hợp nhất logic.
+- **t5 đóng dự án build theo SPEC §5** (ghi allocations kind='actual', status='closed') — mockup chỉ demo phần delta %, không demo đổi status.
+- **Vòng đời draft hoãn** → BACKLOG B9. MVP: dự án lưu là active ngay.
+- **Thang severity cảnh báo CEO** (trộn triệu VND với người×100) giữ nguyên heuristic, tinh chỉnh sau khi CEO dùng thật.

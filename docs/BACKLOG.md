@@ -38,6 +38,11 @@
 **Là gì:** hiện playbook nằm 2 nơi (repo skill cho Claude Code, hằng số trong Edge Function cho nút web), phải sửa cả 2 tay.
 **Vì sao hoãn:** MVP chưa có cả 2 cửa cùng lúc. Khi có, cân nhắc để Edge Function fetch playbook từ DB/repo.
 
+## B9. Vòng đời dự án draft (soạn nháp → kích hoạt)
+**Là gì:** tạo dự án ở trạng thái `draft` (kế hoạch chưa cam kết, không ăn capacity), mở/sửa được từ t2, nút kích hoạt → `active`. Hiện schema + bộ lọc CEO đã có khái niệm draft nhưng không có UI nào tạo/mở/kích hoạt draft.
+**Vì sao hoãn:** MVP lưu dự án là active ngay — đủ cho luồng chính. Thêm vòng đời draft kéo theo quyết định draft có/không tính vào fit-check, what-if, dư địa. (Phán quyết PO 06/2026, xem DECISIONS D14.)
+**Khi làm:** khi PM cần soạn kế hoạch chào giá/chưa ký mà không làm nhiễu bức tranh công ty.
+
 ---
 ## Tính năng đã CÓ trong mockup nhưng thuộc Phase sau MVP (nhắc để không build nhầm thứ tự)
 - Nút AI Generate + Edge Function llm-proxy + cấu hình AI model động → Phase 5.
