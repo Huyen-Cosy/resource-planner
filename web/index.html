@@ -512,6 +512,7 @@ body.role-pm .fin-only{display:none!important}
     </div>
   </div>
   <div class="card">
+    <div id="closeBanner"></div>
     <h2>Số thực tế theo role <span class="tag">prefill = estimate, chỉ sửa ô lệch</span></h2>
     <div class="matrixwrap">
     <table class="alloc" id="closeTable">
@@ -519,14 +520,14 @@ body.role-pm .fin-only{display:none!important}
       <tbody></tbody>
     </table>
     </div>
-    <label>Thực tế kết thúc tháng</label><input type="month" value="2027-01" min="2026-06" max="2030-12" style="max-width:220px">
+    <label>Thực tế kết thúc tháng</label><input type="month" id="closeEnd" min="2026-06" max="2030-12" style="max-width:220px">
     <label>Bài học chính (close note)</label>
-    <textarea>Khách mới chưa từng có DWH — khảo sát nguồn dữ liệu tốn gấp đôi dự kiến. Lần sau: với khách chưa có hạ tầng data, nhân hệ số 1.5 cho phase infrastructure.</textarea>
+    <textarea id="closeNote" placeholder="VD: Khách mới chưa từng có DWH — khảo sát nguồn dữ liệu tốn gấp đôi dự kiến. Lần sau nhân hệ số 1.5 cho phase hạ tầng."></textarea>
     <div class="btnrow">
-      <button class="btn primary" onclick="toast('Đã đóng dự án — bài học được lưu cho AI')">Đóng dự án &amp; lưu bài học</button>
-      <button class="btn">Hủy</button>
+      <button class="btn primary" onclick="doCloseProject()">Đóng dự án &amp; lưu bài học</button>
+      <button class="btn" onclick="go('t2')">Hủy</button>
     </div>
-    <p class="hint">Sau khi đóng: hệ số lệch vào kho ví dụ tham chiếu — mọi lần AI estimate dự án cùng loại sẽ học từ dự án này.</p>
+    <p class="hint">Số thực tế được rải theo đúng hình dạng tháng của estimate (giữ tỉ lệ), ghi vào <span class="mono">allocations kind='actual'</span> + đặt trạng thái <b>closed</b>. Hệ số lệch vào <span class="mono">v_norm_suggestions</span> — mọi lần AI estimate dự án cùng loại sẽ học từ dự án này.</p>
   </div>
 </section>
 
@@ -1225,13 +1226,26 @@ function onAllocEdit(inp){
 let closeId='A',closeRows=[];
 function selectClose(id){
   closeId=id;
-  const p=projects.find(x=>x.id===closeId)||projects[0];closeId=p.id;
-  document.getElementById('projSel5').innerHTML=projects.map(x=>`<option value="${x.id}" ${x.id===closeId?'selected':''}>${x.name}</option>`).join('');
-  closeRows=Object.keys(p.alloc).map(r=>({r,est:Math.round(months.reduce((a,m,i)=>a+av(p,r,i),0)*10)/10})).filter(x=>x.est>0);
+  const p=projects.find(x=>x.id===closeId)||projects[0];if(!p)return;closeId=p.id;
+  document.getElementById('projSel5').innerHTML=projects.map(x=>`<option value="${x.id}" ${x.id===closeId?'selected':''}>${x.name}${x.status==='closed'?' ✓ đã đóng':''}</option>`).join('');
+  /* giữ hình dạng estimate theo từng tháng để rải số thực tế đúng tỉ lệ */
+  closeRows=Object.keys(p.alloc).map(r=>{
+    const monthly=months.map((m,i)=>av(p,r,i));
+    const est=Math.round(monthly.reduce((a,b)=>a+b,0)*10)/10;
+    const actTot=p.actual&&p.actual[r]?Math.round(p.actual[r].reduce((a,b)=>a+(+b||0),0)*10)/10:est;
+    return {r,est,monthly,act:actTot};
+  }).filter(x=>x.est>0);
   document.querySelector('#closeTable tbody').innerHTML=closeRows.map((row,idx)=>
     `<tr><td style="text-align:left"><b>${row.r}</b></td><td class="mono">${row.est.toFixed(1)}</td>
-     <td><input value="${row.est.toFixed(1)}" inputmode="decimal" data-idx="${idx}" oninput="onCloseEdit(this)"></td>
+     <td><input value="${row.act.toFixed(1)}" inputmode="decimal" data-idx="${idx}" oninput="onCloseEdit(this)"></td>
      <td class="delta" id="d-${idx}">0%</td></tr>`).join('');
+  const ce=document.getElementById('closeEnd');if(ce)ce.value=p.end;
+  const cn=document.getElementById('closeNote');if(cn)cn.value=p.closeNote||'';
+  const banner=document.getElementById('closeBanner');
+  if(banner)banner.innerHTML=p.status==='closed'
+    ?`<div class="note warn" style="margin:0 0 12px">Dự án này <b>đã đóng</b>${p.closedAt?' ('+String(p.closedAt).slice(0,10)+')':''}. Lưu lại sẽ cập nhật số thực tế & bài học.</div>`
+    :'';
+  closeRows.forEach((row,idx)=>{const inp=document.querySelector(`#closeTable input[data-idx="${idx}"]`);if(inp)onCloseEdit(inp);});
 }
 function onCloseEdit(inp){
   const idx=+inp.dataset.idx,est=closeRows[idx].est;
@@ -1552,6 +1566,7 @@ function go(id){
   document.getElementById(id).classList.add('show');
   document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
   if(id==='t0')renderCEO();
+  if(id==='t5')selectClose(closeId);
   if(id==='t7'){if(empViewMode==='role')renderByRole(document.getElementById('roleSel').value);else renderEmp(curEmp);}
   window.scrollTo({top:0});
 }
@@ -2178,9 +2193,10 @@ async function loadFromSupabase(){
   }
   projects=pubs.map(p=>({ id:p.id, name:p.name, type:p.project_type, pm:p.pm_owner,
     prio:'P'+(p.priority||3), start:String(p.start_month).slice(0,7), end:String(p.end_month).slice(0,7),
-    status:p.status, roles:p.roles||[], alloc:{}, assign:{}, phases:[],
+    status:p.status, roles:p.roles||[], alloc:{}, assign:{}, actual:{}, phases:[],
     revenue:finMap[p.id]?finMap[p.id].revenue:0, otherCost:finMap[p.id]?finMap[p.id].otherCost:0,
     mgmtPct:finMap[p.id]?finMap[p.id].mgmtPct:0,
+    closeNote:p.close_note||'', closedAt:p.closed_at||null,
     createdBy:p.created_by, lastEdit:(p.pm_owner||'')+' · đã lưu' }));
   const byId={}; projects.forEach(p=>byId[p.id]=p);
 
@@ -2193,6 +2209,13 @@ async function loadFromSupabase(){
   (al||[]).forEach(a=>{ const p=byId[a.project_id]; if(!p)return;
     if(!p.alloc[a.role_code])p.alloc[a.role_code]=[];
     p.alloc[a.role_code][monthToIdx(a.month)]=+a.headcount; });
+
+  /* --- allocations (actual) — dự án đã đóng, dùng cho t5 prefill + vòng học --- */
+  const {data:ac}=await sb.from('allocations').select('*').eq('kind','actual');
+  (ac||[]).forEach(a=>{ const p=byId[a.project_id]; if(!p)return;
+    if(!p.actual)p.actual={};
+    if(!p.actual[a.role_code])p.actual[a.role_code]=[];
+    p.actual[a.role_code][monthToIdx(a.month)]=+a.headcount; });
 
   /* --- assignments --- */
   const {data:asg}=await sb.from('assignments').select('*');
@@ -2241,6 +2264,36 @@ async function persistProject(p){
   for(const r in (p.assign||{})){ (p.assign[r]||[]).forEach((cell,i)=>{ if(cell)for(const eid in cell){ if(+cell[eid]>0)asRows.push({project_id:p.id,role_code:r,month:idxToMonth(i),employee_id:eid,percent:+cell[eid]}); } }); }
   if(asRows.length){ const {error}=await sb.from('assignments').insert(asRows); if(error)dbErr(error,'lưu gán người'); }
 }
+
+/* --- t5: đóng dự án → ghi allocations kind='actual' + status='closed' + close_note --- */
+window.doCloseProject=async function(){
+  const p=projects.find(x=>x.id===closeId); if(!p){toast('Chọn dự án để đóng','warn');return;}
+  if(!confirm(`Đóng dự án "${p.name.split(' — ')[0]}"? Số thực tế & bài học sẽ được lưu để AI học.`))return;
+  const note=(document.getElementById('closeNote').value||'').trim();
+  const endVal=(document.getElementById('closeEnd')||{}).value||p.end;
+  const endIdx=monthToIdx(endVal);
+  /* rải actual theo đúng hình dạng tháng của estimate (giữ tỉ lệ), bỏ tháng sau mốc kết thúc thực tế */
+  const rows=[];
+  closeRows.forEach((row,idx)=>{
+    const inp=document.querySelector(`#closeTable input[data-idx="${idx}"]`);
+    const actTot=inp?parseFloat(String(inp.value).replace(',','.')):row.est;
+    if(isNaN(actTot)||actTot<0)return;
+    const factor=row.est>0?actTot/row.est:0;
+    row.monthly.forEach((v,i)=>{ if(v>0&&i<=endIdx){ const hc=Math.round(v*factor*1000)/1000;
+      if(hc>0)rows.push({project_id:p.id,role_code:row.r,month:idxToMonth(i),headcount:Math.min(hc,50),kind:'actual'}); } });
+  });
+  await sb.from('allocations').delete().eq('project_id',p.id).eq('kind','actual');
+  if(rows.length){ const {error}=await sb.from('allocations').insert(rows); if(error)return dbErr(error,'lưu số thực tế'); }
+  const closedAt=new Date().toISOString();
+  const {error:pe}=await sb.from('projects').update({status:'closed',closed_at:closedAt,close_note:note}).eq('id',p.id);
+  if(pe)return dbErr(pe,'đóng dự án');
+  /* cập nhật local */
+  p.status='closed';p.closeNote=note;p.closedAt=closedAt;p.actual={};
+  rows.forEach(r=>{ if(!p.actual[r.role_code])p.actual[r.role_code]=[]; p.actual[r.role_code][monthToIdx(r.month)]=r.headcount; });
+  logAudit((CURRENT_USER&&CURRENT_USER.email)||'?','đóng dự án '+p.name.split(' — ')[0]);
+  refreshCompany();renderProjects();renderCEO&&renderCEO();selectClose(p.id);
+  toast('Đã đóng dự án — số thực tế & bài học đã lưu cho AI');
+};
 
 /* --- t3: nút Lưu chi tiết dự án --- */
 const _saveDetail=window.saveDetail;
