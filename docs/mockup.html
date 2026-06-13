@@ -193,6 +193,8 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--moss);outline-of
         <option value="active">Dự án đã cam kết (active)</option>
         <option value="all">Gồm cả dự án nháp (draft)</option>
       </select>
+      <button class="btn" onclick="exportReportPDF()" title="Mở hộp in → chọn 'Save as PDF'">🖨 Xuất PDF</button>
+      <button class="btn" onclick="exportReportDoc()" title="Tải về file .doc mở bằng Word">📄 Xuất Word</button>
     </div>
   </div>
   <div class="kpis" id="ceoKpis"></div>
@@ -1747,6 +1749,86 @@ function saveManual(){
   document.getElementById('modalText').innerHTML=`Dự án <b>${np.name}</b> (nhập thủ công) đã được lưu và fit vào Bức tranh công ty.`;
   document.getElementById('modalView').onclick=()=>{closeModal();openProject(np.id);};
   document.getElementById('modal').style.display='flex';
+}
+
+/* =================== XUẤT BÁO CÁO CEO (PDF qua print · Word qua .doc) ===================
+   Gom dữ liệu kế hoạch hiện tại thành 1 báo cáo sạch — không thư viện ngoài, chạy offline. Xem D17. */
+function reportCss(){return `
+  *{box-sizing:border-box} body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a1a;margin:0;padding:24px;font-size:13px;line-height:1.5}
+  h1{font-size:22px;margin:0 0 4px} h2{font-size:15px;margin:22px 0 8px;border-bottom:2px solid #2b6cb0;padding-bottom:4px;color:#2b6cb0}
+  .meta{color:#666;font-size:12px;margin-bottom:8px}
+  table{border-collapse:collapse;width:100%;margin:6px 0;font-size:12px}
+  th,td{border:1px solid #cbd5e0;padding:5px 8px;text-align:right} th{background:#edf2f7;text-align:center}
+  td.l,th.l{text-align:left}
+  .kpi-row{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0}
+  .kpi{border:1px solid #cbd5e0;border-radius:6px;padding:8px 12px;min-width:130px}
+  .kpi .v{font-size:18px;font-weight:700} .kpi .l{font-size:11px;color:#666}
+  .good{color:#276749} .bad{color:#c53030} .warn{color:#b7791f}
+  .short{background:#fed7d7} .full{background:#fefcbf}
+  ul{margin:4px 0 4px 18px;padding:0} li{margin:2px 0}
+  .note{font-size:12px;color:#444;margin:4px 0}
+  .foot{margin-top:24px;font-size:11px;color:#888;border-top:1px solid #e2e8f0;padding-top:8px}
+  @media print{body{padding:0} h2{page-break-after:avoid} table{page-break-inside:avoid}}
+`;}
+function buildCeoReport(){
+  const list=ceoList();
+  let totRev=0,totCost=0,loss=0;
+  list.forEach(p=>{totRev+=+p.revenue||0;totCost+=projTotalCost(p);if(projMargin(p)<0)loss++;});
+  const totMargin=totRev-totCost;
+  const demand=computeDemand(projects);
+  let shortCount=0;months.forEach((m,i)=>{for(const r of ROLES){if(roleCapacity(r)-demand[r][i]<0)shortCount++;}});
+  const ds=new Date().toLocaleDateString('vi-VN');
+  const scope=document.getElementById('ceoScope').value==='all'?'gồm cả dự án nháp':'dự án đã cam kết (active)';
+  let h=`<h1>Báo cáo Kế hoạch Nguồn lực & Tài chính</h1>`+
+    `<div class="meta">Lập ngày ${ds} · Phạm vi: ${scope} · Đơn vị tiền: triệu VND · Nguồn: Resource Planner (kế hoạch dự kiến)</div>`+
+    `<div class="kpi-row">`+
+    `<div class="kpi"><div class="v">${list.length}</div><div class="l">dự án</div></div>`+
+    `<div class="kpi"><div class="v">${fmtM(totRev)}</div><div class="l">tổng doanh thu</div></div>`+
+    `<div class="kpi"><div class="v">${fmtM(totCost)}</div><div class="l">tổng chi phí</div></div>`+
+    `<div class="kpi"><div class="v ${totMargin<0?'bad':'good'}">${fmtM(totMargin)}</div><div class="l">tổng margin · ${totRev?Math.round(totMargin/totRev*100):0}%</div></div>`+
+    `<div class="kpi"><div class="v ${loss?'bad':'good'}">${loss}</div><div class="l">dự án lỗ kế hoạch</div></div>`+
+    `<div class="kpi"><div class="v ${shortCount?'bad':'good'}">${shortCount}</div><div class="l">lượt role-tháng thiếu</div></div>`+
+    `</div>`;
+  h+=`<h2>Tài chính theo dự án</h2><table><thead><tr><th class="l">Dự án</th><th class="l">PM</th><th>Ưu tiên</th><th class="l">Thời gian</th><th>Doanh thu</th><th>Chi phí NS</th><th>Management</th><th>Tổng CP</th><th>Margin</th><th>%</th></tr></thead><tbody>`;
+  list.slice().sort((a,b)=>projMargin(a)-projMargin(b)).forEach(p=>{
+    const rev=+p.revenue||0,mg=projMargin(p),pct=rev?Math.round(mg/rev*100):0;
+    h+=`<tr><td class="l">${p.name}</td><td class="l">${p.pm}</td><td>${p.prio}</td><td class="l">${fmtYM(p.start)}→${fmtYM(p.end)}</td>`+
+      `<td>${fmtM(rev)}</td><td>${fmtM(projCost(p))}</td><td>${fmtM(projMgmtCost(p))}</td><td>${fmtM(projTotalCost(p))}</td>`+
+      `<td class="${mg<0?'bad':'good'}">${fmtM(mg)}</td><td class="${pct<10?'warn':'good'}">${pct}%</td></tr>`;
+  });
+  h+=`</tbody></table>`;
+  const activeRoles=ROLES.filter(r=>months.some((m,i)=>demand[r][i]>0));
+  h+=`<h2>Bức tranh nguồn lực (nhu cầu / năng lực theo role × tháng)</h2><table><thead><tr><th class="l">Role</th><th>Năng lực</th>`;
+  months.forEach((m,i)=>h+=`<th>${mLabel(i)}</th>`);
+  h+=`</tr></thead><tbody>`;
+  activeRoles.forEach(r=>{
+    h+=`<tr><td class="l">${roleName[r]||r}</td><td>${roleCapacity(r)}</td>`;
+    months.forEach((m,i)=>{const dem=demand[r][i],gap=roleCapacity(r)-dem;const cls=gap<0?'short':(gap===0&&dem>0?'full':'');h+=`<td class="${cls}">${dem?dem:'·'}</td>`;});
+    h+=`</tr>`;
+  });
+  h+=`</tbody></table><div class="note">Tô đỏ = thiếu người (nhu cầu &gt; năng lực) · vàng = kín (nhu cầu = năng lực).</div>`;
+  const al=[];
+  list.forEach(p=>{const mg=projMargin(p);if(mg<0)al.push(`<b>${p.name.split(' — ')[0]}</b> lỗ kế hoạch ${fmtM(mg)} triệu — đàm phán lại giá/scope hoặc giảm nhân sự senior`);});
+  months.forEach((m,i)=>{for(const r of ROLES){const g=roleCapacity(r)-demand[r][i];if(g<0)al.push(`Thiếu <b>${Math.abs(Math.round(g*10)/10)} ${r}</b> vào ${mLabel(i)} — tuyển/thuê ngoài hoặc giãn lịch`);}});
+  h+=`<h2>Cảnh báo kế hoạch</h2>`+(al.length?`<ul>`+al.slice(0,12).map(a=>`<li>${a}</li>`).join('')+`</ul>`:`<div class="note good">✓ Không có cảnh báo: không dự án lỗ, không thiếu người trong khung kế hoạch.</div>`);
+  h+=`<div class="foot">Báo cáo là <b>KẾ HOẠCH DỰ KIẾN</b> tính từ phân bổ nguồn lực + rate cá nhân + doanh thu nhập tay — KHÔNG phải số thực tế/tiến độ thực. Sinh tự động từ Resource Planner.</div>`;
+  return h;
+}
+function exportReportPDF(){
+  const w=window.open('','_blank');
+  if(!w){alert('Trình duyệt chặn popup — cho phép popup cho trang này để xuất PDF.');return;}
+  w.document.write('<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Báo cáo CEO — Resource Planner</title><style>'+reportCss()+'</style></head><body>'+buildCeoReport()+'</body></html>');
+  w.document.close();w.focus();
+  setTimeout(()=>{w.print();},400);
+}
+function exportReportDoc(){
+  const head='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>'+reportCss()+'</style></head><body>';
+  const blob=new Blob(['﻿'+head+buildCeoReport()+'</body></html>'],{type:'application/msword'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='Bao-cao-CEO-'+new Date().toISOString().slice(0,10)+'.doc';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 /* khởi tạo */
