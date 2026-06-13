@@ -222,21 +222,24 @@ body.role-pm .fin-only{display:none!important}
 <!-- ============ TAB 1 ============ -->
 <!-- ============ TAB 0: TỔNG QUAN CEO ============ -->
 <section class="tab show" id="t0">
-  <div class="pagehead">
-    <h1>Tổng quan kế hoạch</h1>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+  <div class="pagehead" style="margin-bottom:10px">
+    <div>
+      <h1 style="margin:0">Tổng quan kế hoạch</h1>
       <span class="sub">góc nhìn planning — dữ liệu kế hoạch, không phải tiến độ thực</span>
-      <select class="projselect" id="ceoScope" onchange="ceoProjSel=null;renderCEO()">
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select class="projselect" id="ceoScope" style="width:auto;min-width:0;padding:6px 10px" onchange="ceoProjSel=null;renderCEO()">
         <option value="active">Dự án đã cam kết (active)</option>
         <option value="all">Gồm cả dự án nháp (draft)</option>
       </select>
-      <button class="btn" onclick="exportReportPDF()" title="Mở hộp in → chọn 'Save as PDF'">🖨 Xuất PDF</button>
-      <button class="btn" onclick="exportReportDoc()" title="Tải về file .doc mở bằng Word">📄 Xuất Word</button>
+      <button class="btn sm" onclick="exportReportPDF()" title="Mở hộp in → chọn 'Save as PDF'">🖨 PDF</button>
+      <button class="btn sm" onclick="exportReportDoc()" title="Tải về file .doc mở bằng Word">📄 Word</button>
     </div>
   </div>
-  <div class="card" style="padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-    <span style="font-weight:600;font-size:13px">Lọc dự án:</span>
-    <div id="ceoProjFilter" style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px"></div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;margin:0 0 12px;padding:7px 12px;background:rgba(127,127,127,.06);border-radius:8px">
+    <span style="font-weight:600">Lọc dự án:</span>
+    <div id="ceoProjFilter" style="display:flex;gap:14px;flex-wrap:wrap"></div>
+    <span class="sub" style="margin-left:auto;font-size:11px;cursor:help" title="Khi đổi bộ lọc, các khu vực sau tự tính lại theo đúng dự án đang chọn: 5 ô KPI tổng quan · bảng Margin từng dự án · Cảnh báo kế hoạch · Dư địa nhận thêm việc · baseline của What-if. (Tab khác như Bức tranh công ty, Nguồn lực cá nhân KHÔNG bị ảnh hưởng — chỉ trang này.)">ⓘ lọc cập nhật: KPI · margin · cảnh báo · dư địa · what-if</span>
   </div>
   <details class="card" style="padding:12px 16px">
     <summary style="cursor:pointer;font-weight:600;font-size:14px">ℹ️ Cách tính các con số <span class="tag">bấm để mở — đọc 30 giây là tin được số</span></summary>
@@ -255,6 +258,18 @@ body.role-pm .fin-only{display:none!important}
     </div>
   </details>
   <div class="kpis" id="ceoKpis"></div>
+  <div class="card" style="border-color:var(--moss)">
+    <h2>🔮 Mô phỏng "nếu nhận thêm dự án" (what-if) <span class="tag">không lưu — thử trước khi quyết nhận</span></h2>
+    <div class="btnrow" style="margin-top:0;align-items:flex-end;flex-wrap:wrap">
+      <div><label style="margin-top:0">Tháng bắt đầu</label><input type="month" id="wfStart" value="2026-09" min="2026-06" max="2030-12"></div>
+      <div><label style="margin-top:0">Số tháng</label><input type="number" id="wfDur" value="5" min="1" max="24" style="width:70px"></div>
+      <div class="fin-only"><label style="margin-top:0">Doanh thu (triệu)</label><input type="number" id="wfRev" value="800" min="0" step="50" style="width:120px"></div>
+      <button class="btn ai" onclick="runWhatIf()">▶ Mô phỏng</button>
+      <button class="btn" onclick="clearWhatIf()">Xóa</button>
+    </div>
+    <div id="wfRoles" style="margin-top:12px"></div>
+    <div id="wfResult" style="display:none;margin-top:14px"></div>
+  </div>
   <div class="card">
     <h2>Margin kế hoạch từng dự án <span class="tag">doanh thu − tổng chi phí dự kiến</span></h2>
     <div class="matrixwrap"><table id="ceoProjTable"></table></div>
@@ -276,18 +291,6 @@ body.role-pm .fin-only{display:none!important}
       <div id="slackRangeNote" style="margin-bottom:10px;font-size:12px;color:var(--muted)"></div>
       <div id="ceoSlack"></div>
     </div>
-  </div>
-  <div class="card" style="border-color:var(--moss)">
-    <h2>Mô phỏng "nếu nhận thêm dự án" (what-if) <span class="tag">không lưu — chỉ thử</span></h2>
-    <div class="btnrow" style="margin-top:0;align-items:flex-end;flex-wrap:wrap">
-      <div><label style="margin-top:0">Tháng bắt đầu</label><input type="month" id="wfStart" value="2026-09" min="2026-06" max="2030-12"></div>
-      <div><label style="margin-top:0">Số tháng</label><input type="number" id="wfDur" value="5" min="1" max="24" style="width:70px"></div>
-      <div><label style="margin-top:0">Doanh thu (triệu)</label><input type="number" id="wfRev" value="800" min="0" step="50" style="width:120px"></div>
-      <button class="btn ai" onclick="runWhatIf()">▶ Mô phỏng</button>
-      <button class="btn" onclick="clearWhatIf()">Xóa</button>
-    </div>
-    <div id="wfRoles" style="margin-top:12px"></div>
-    <div id="wfResult" style="display:none;margin-top:14px"></div>
   </div>
 </section>
 
@@ -1494,8 +1497,9 @@ function runWhatIf(){
   const alloc={};ROLES.forEach(r=>{const el=document.getElementById('wf-'+r);const v=el?+el.value||0:0;if(v>0){alloc[r]=[];for(let k=0;k<dur;k++)alloc[r][s+k]=v;}});
   const wf={id:'WF',name:'(mô phỏng)',type:'OTHER',pm:'?',prio:'P3',start,end:mAdd(start,dur-1),status:'active',revenue:rev,otherCost:0,roles:Object.keys(alloc),alloc,assign:{}};
   const keep=pending;pending=wf;buildMonths();normalizeAlloc();
-  const before=shortageMap(computeDemand(projects));
-  const after=shortageMap(computeDemand([...projects,wf]));
+  const base=projects.filter(p=>!ceoProjSel||ceoProjSel.has(p.id));   /* what-if dựa trên đúng dự án đang lọc ở t0 */
+  const before=shortageMap(computeDemand(base));
+  const after=shortageMap(computeDemand([...base,wf]));
   const cost=projCost(wf),margin=rev-cost;
   pending=keep;buildMonths();normalizeAlloc();
   const conflicts=[];
@@ -1503,7 +1507,7 @@ function runWhatIf(){
   const box=document.getElementById('wfResult');box.style.display='block';
   box.className='note '+(conflicts.length||margin<0?'warn':'');
   box.innerHTML=`<b>Kết quả mô phỏng:</b><br>`+
-    `Margin dự kiến: <b style="color:${margin<0?'var(--alert)':'var(--moss)'}">${fmtM(margin)}</b> triệu (DT ${fmtM(rev)} − chi phí NS ${fmtM(cost)})<br>`+
+    `<span class="fin-only">Margin dự kiến: <b style="color:${margin<0?'var(--alert)':'var(--moss)'}">${fmtM(margin)}</b> triệu (DT ${fmtM(rev)} − chi phí NS ${fmtM(cost)})<br></span>`+
     (conflicts.length
       ? `Nguồn lực: <b style="color:var(--alert)">tạo thiếu hụt</b> — ${conflicts.slice(0,6).join(' · ')}${conflicts.length>6?'…':''}<br><span style="font-size:12px;color:var(--muted)">→ cần tuyển/thuê ngoài, hoặc lùi lịch, hoặc cân nhắc từ chối</span>`
       : `Nguồn lực: <b style="color:var(--moss)">✓ kham được</b> với đội hình hiện tại, không gây thiếu hụt mới`);
