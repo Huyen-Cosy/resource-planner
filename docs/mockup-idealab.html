@@ -608,7 +608,11 @@ let employees=[
  {id:'e6',name:'Hiếu (Designer)',role:'DESIGN',active:true,level:'Middle',rateType:'hourly',rate:200},
  {id:'e7',name:'Trung (PO)',role:'PO',active:true,level:'Lead',rateType:'hourly',rate:200},
  {id:'e8',name:'Bách (Tech Lead)',role:'ARCH',active:true,level:'Lead',rateType:'hourly',rate:200},
- {id:'e9',name:'Dung (Data Lead)',role:'DATA_LEAD',active:true,level:'Lead',rateType:'hourly',rate:200}
+ {id:'e9',name:'Dung (Data Lead)',role:'DATA_LEAD',active:true,level:'Lead',rateType:'hourly',rate:200},
+ /* === Bổ sung đội dự án SVN (rate quy ước giống Thanh Yến: 200k/h). Trung/Huyên/Dung dùng chung 2 dự án === */
+ {id:'e10',name:'Mai (DA)',role:'DA',active:true,level:'Senior',rateType:'hourly',rate:200},
+ {id:'e11',name:'Hạnh (DA)',role:'DA',active:true,level:'Middle',rateType:'hourly',rate:200},
+ {id:'e12',name:'Dương (DE)',role:'DE',active:true,level:'Middle',rateType:'hourly',rate:200}
 ];
 function empName(id){const e=employees.find(x=>x.id===id);return e?e.name:'';}
 function empLabel(id){const e=empById(id);return e?`${e.name} · ${e.role} ${e.level||''}`.trim():'';}
@@ -675,6 +679,28 @@ let projects=[
     DE:[{},{e4:50},{e4:50},{e4:50}],
     DA:[{},{e5:100},{e5:100},{e5:100}],
     DESIGN:[{e6:50},{e6:25},{},{}]
+  }},
+ /* === DỰ ÁN SVN × ideaLAB — Dashboard F&B (gen estimation từ MM, đang chạy giữa chừng) ===
+    Nguồn: "MEETING MINUTES - SVN X IDEALAB.md". Stack Fast(POS)→DWH→Power BI + RLS theo BU.
+    Mục tiêu: dashboard RA QUYẾT ĐỊNH (Menu Engineering · Hiệu suất NVL · AOV/TA Mix · Customer).
+    Cửa sổ hiển thị trong tool = Mar→Jun (ANCHOR=2026-03; dự án đã chạy từ trước nhưng tool chặn start<ANCHOR).
+    4 workstream song song → map thành 4 phase (overlap, v17 cho phép). Đích chốt ~06/06.
+    Rate quy ước giống Thanh Yến (200k/h). Trung(PO)+Bách+Dung tính qua management 10%.
+    Huyên (PM) DÙNG CHUNG với Thanh Yến → xem tab Nguồn lực cá nhân để thấy tải cộng dồn.
+    ⚠ revenue 550 là GIẢ ĐỊNH (margin mục tiêu ~35%) — MM không nêu giá hợp đồng; chỉnh ở card Tài chính. */
+ {id:'SVN',name:'SVN × ideaLAB — Dashboard Hiệu suất NVL & Menu Engineering',type:'BI_DASHBOARD',pm:'Huyên',prio:'P1',
+  start:'2026-03',end:'2026-06',status:'active',revenue:550,otherCost:0,mgmtPct:10,lastEdit:'Huyên · gen estimation từ MM',
+  roles:['PM','DA','DE'],
+  phases:[['Menu Engineering (định mức)',0,1],['Hiệu suất NVL (hao hụt — mockup→PBI)',1,3],['AOV/TA Mix',1,2],['Customer Dashboard',2,3]],
+  alloc:{
+    PM:[0.3,0.3,0.3,0.3],   /* Huyên — điều phối, DÙNG CHUNG với Thanh Yến */
+    DA:[1,2,2,1.5],         /* Mai (logic/data) + Hạnh (build dashboard) — cao điểm Apr–May */
+    DE:[0,0.5,1,1]          /* Dương — Fast API → DWH automation, ramp theo tiến độ pipeline */
+  },
+  assign:{
+    PM:[{e1:30},{e1:30},{e1:30},{e1:30}],
+    DA:[{e10:50,e11:50},{e10:100,e11:100},{e10:100,e11:100},{e10:50,e11:100}],
+    DE:[{},{e12:50},{e12:100},{e12:100}]
   }}
 ];
 const otherProjects=[];
