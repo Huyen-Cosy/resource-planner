@@ -226,13 +226,17 @@ body.role-pm .fin-only{display:none!important}
     <h1>Tổng quan kế hoạch</h1>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span class="sub">góc nhìn planning — dữ liệu kế hoạch, không phải tiến độ thực</span>
-      <select class="projselect" id="ceoScope" onchange="renderCEO()">
+      <select class="projselect" id="ceoScope" onchange="ceoProjSel=null;renderCEO()">
         <option value="active">Dự án đã cam kết (active)</option>
         <option value="all">Gồm cả dự án nháp (draft)</option>
       </select>
       <button class="btn" onclick="exportReportPDF()" title="Mở hộp in → chọn 'Save as PDF'">🖨 Xuất PDF</button>
       <button class="btn" onclick="exportReportDoc()" title="Tải về file .doc mở bằng Word">📄 Xuất Word</button>
     </div>
+  </div>
+  <div class="card" style="padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <span style="font-weight:600;font-size:13px">Lọc dự án:</span>
+    <div id="ceoProjFilter" style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px"></div>
   </div>
   <details class="card" style="padding:12px 16px">
     <summary style="cursor:pointer;font-weight:600;font-size:14px">ℹ️ Cách tính các con số <span class="tag">bấm để mở — đọc 30 giây là tin được số</span></summary>
@@ -262,10 +266,11 @@ body.role-pm .fin-only{display:none!important}
     </div>
     <div class="card">
       <h2>Dư địa nhận thêm việc <span class="tag" title="Người-tháng = 1 người làm full-time 1 tháng. VD 3.5 người-tháng = chứa thêm được khối việc bằng 3.5 tháng-công của 1 người.">tổng người-tháng còn rảnh theo role ⓘ</span></h2>
-      <div style="margin-bottom:6px;font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap" title="Chọn đúng khoảng tháng bạn định nhận việc — VD cân nhắc 1 dự án chạy 6/2026→10/2026 thì đặt Từ 2026-06, Đến 2026-10. Dư địa = tổng năng lực còn trống trong khoảng đó.">Đo dư địa trong khoảng:
-        Từ <input type="month" id="slackFrom" style="width:auto;padding:4px 8px" onchange="renderCEO()">
-        đến <input type="month" id="slackTo" style="width:auto;padding:4px 8px" onchange="renderCEO()">
-        <span id="slackLenBadge" style="display:inline-block;padding:3px 10px;border-radius:99px;background:var(--moss-soft);color:var(--moss);font-weight:600;font-size:12px"></span>
+      <div style="margin-bottom:8px;font-size:13px;color:var(--muted)" title="Chọn đúng khoảng tháng bạn định nhận việc — VD cân nhắc 1 dự án chạy 6/2026→10/2026 thì đặt Từ 2026-06, Đến 2026-10. Nhập năm nào cũng được; thứ tự Từ/Đến không quan trọng.">Đo dư địa trong khoảng (chọn tự do mọi năm):</div>
+      <div style="margin-bottom:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:6px;margin:0;color:var(--ink);font-size:13px">Từ <input type="month" id="slackFrom" min="2020-01" max="2099-12" style="padding:5px 8px;font-size:13px" onchange="renderCEO()"></label>
+        <label style="display:flex;align-items:center;gap:6px;margin:0;color:var(--ink);font-size:13px">đến <input type="month" id="slackTo" min="2020-01" max="2099-12" style="padding:5px 8px;font-size:13px" onchange="renderCEO()"></label>
+        <span id="slackLenBadge" style="display:inline-block;padding:4px 12px;border-radius:99px;background:var(--moss-soft);color:var(--moss);font-weight:600;font-size:12px"></span>
         <button class="btn sm" onclick="resetSlackRange()" title="Đặt lại = toàn bộ khung kế hoạch">↺ Toàn khung</button>
       </div>
       <div id="slackRangeNote" style="margin-bottom:10px;font-size:12px;color:var(--muted)"></div>
@@ -393,6 +398,9 @@ body.role-pm .fin-only{display:none!important}
     <div class="kpis" id="finKpis"></div>
     <h3 style="margin:18px 0 6px;font-size:14px">Chi tiết cấu thành chi phí <span class="tag">rate từng người đã gán + phần chưa gán → ra đúng con số trên</span></h3>
     <div class="matrixwrap"><table class="alloc" id="costBreakdown"></table></div>
+    <div class="note" style="margin-top:8px"><b>Cách đọc cột "Người-tháng":</b> = tổng (% gán ÷ 100) cộng dồn qua các tháng dự án — đo "1 người làm full-time bao nhiêu tháng".<br>
+      VD: gán 1 người <b>100%</b> suốt <b>3 tháng</b> → 3.0 người-tháng · gán <b>50%</b> trong <b>4 tháng</b> → 2.0 · gán <b>100%</b> ở <b>2 role</b> trong <b>1 tháng</b> → 2.0.<br>
+      <b>Chi phí mỗi dòng = Rate (triệu/tháng) × Người-tháng.</b> Cộng mọi dòng = Σ chi phí nhân sự.</div>
     <h3 style="margin:18px 0 6px;font-size:14px">Burn chi phí theo tháng <span class="tag">chi phí NS từng tháng + lũy kế vs doanh thu</span></h3>
     <div class="matrixwrap"><table class="matrix" id="finTable"></table></div>
     <p class="hint">Chi phí tháng = Σ chi phí từng người được gán (% × rate cá nhân). Slot chưa gán người → ước lượng theo rate trung bình của role. Rate cá nhân + level cấu hình ở tab Cấu hình (nhạy cảm — bản thật giới hạn quyền xem). Ô đỏ khi chi phí lũy kế vượt doanh thu.</p>
@@ -1362,12 +1370,26 @@ let auditLog=[
 ];
 function logAudit(who,what){auditLog.unshift({who,what,when:'hôm nay'});if(auditLog.length>20)auditLog.pop();}
 function ceoList(){return projects.filter(p=>document.getElementById('ceoScope').value==='all'?p.status!=='closed':p.status==='active');}
+let ceoProjSel=null;   /* null = chưa init → chọn tất cả; Set các id dự án đang lọc */
+function renderCeoFilter(){
+  const box=document.getElementById('ceoProjFilter');if(!box)return;
+  const cand=ceoList();
+  if(ceoProjSel===null)ceoProjSel=new Set(cand.map(p=>p.id));
+  const candIds=new Set(cand.map(p=>p.id));
+  [...ceoProjSel].forEach(id=>{if(!candIds.has(id))ceoProjSel.delete(id);});   /* bỏ id không còn trong phạm vi */
+  const allOn=cand.length>0&&cand.every(p=>ceoProjSel.has(p.id));
+  box.innerHTML=`<label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer;font-weight:600"><input type="checkbox" ${allOn?'checked':''} onchange="toggleCeoAll(this.checked)"> Tất cả (${cand.length})</label>`+
+    cand.map(p=>`<label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer"><input type="checkbox" ${ceoProjSel.has(p.id)?'checked':''} onchange="toggleCeoProj('${p.id}',this.checked)"> ${p.name.split(' — ')[0]}${p.status==='draft'?' <span style="color:var(--muted)">(nháp)</span>':''}</label>`).join('')||'<span style="color:var(--muted)">Chưa có dự án nào trong phạm vi.</span>';
+}
+function toggleCeoAll(v){const cand=ceoList();ceoProjSel=new Set(v?cand.map(p=>p.id):[]);renderCEO();}
+function toggleCeoProj(id,v){if(!ceoProjSel)ceoProjSel=new Set();if(v)ceoProjSel.add(id);else ceoProjSel.delete(id);renderCEO();}
 function renderCEO(){
-  const list=ceoList();
+  renderCeoFilter();
+  const list=ceoList().filter(p=>ceoProjSel.has(p.id));
   let totRev=0,totCost=0,lossCount=0;
   list.forEach(p=>{totRev+=+p.revenue||0;totCost+=projTotalCost(p);if(projMargin(p)<0)lossCount++;});
   const totMargin=totRev-totCost;
-  const demand=computeDemand(projects);
+  const demand=computeDemand(projects.filter(p=>ceoProjSel.has(p.id)));
   let shortMonths=0;
   months.forEach((m,i)=>{for(const r of ROLES){const g=roleCapacity(r)-demand[r][i];if(g<0)shortMonths++;}});
   document.getElementById('ceoKpis').innerHTML=
@@ -1410,10 +1432,9 @@ function renderCEO(){
   const defTo=Math.max(0,lastActive);
   if(sfEl&&!sfEl.value)sfEl.value=mAdd(ANCHOR,0);
   if(stEl&&!stEl.value)stEl.value=mAdd(ANCHOR,defTo);
-  let fromIdx=sfEl?mDiff(ANCHOR,sfEl.value):0, toIdx=stEl?mDiff(ANCHOR,stEl.value):defTo;
-  if(isNaN(fromIdx)||fromIdx<0)fromIdx=0;
-  if(isNaN(toIdx))toIdx=defTo;
-  if(toIdx<fromIdx)toIdx=fromIdx;
+  let a=sfEl&&sfEl.value?mDiff(ANCHOR,sfEl.value):0, b=stEl&&stEl.value?mDiff(ANCHOR,stEl.value):defTo;
+  if(isNaN(a))a=0; if(isNaN(b))b=defTo;
+  let fromIdx=Math.min(a,b), toIdx=Math.max(a,b);   /* thứ tự Từ/Đến không quan trọng — luôn lấy khoảng [nhỏ, lớn] */
   if(toIdx>fromIdx+1199)toIdx=fromIdx+1199;          /* chỉ chặn runaway (~100 năm) — thực tế không giới hạn */
   const rangeLen=toIdx-fromIdx+1;
   const badge=document.getElementById('slackLenBadge');
