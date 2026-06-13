@@ -952,15 +952,19 @@ function renderDetail(){
     }
   });
   document.getElementById('ganttBox').innerHTML=g+'</div>';
-  /* bảng sửa phase: tháng bắt đầu/kết thúc của từng phase */
-  let pe='<table class="alloc"><thead><tr><th>Phase</th><th>Bắt đầu</th><th>Kết thúc</th></tr></thead><tbody>';
+  /* bảng sửa phase: tên + tháng bắt đầu/kết thúc + xóa; nút thêm phase */
+  let pe='<table class="alloc"><thead><tr><th>Phase</th><th>Bắt đầu</th><th>Kết thúc</th><th></th></tr></thead><tbody>';
   p.phases.forEach((ph,k)=>{
-    let opts='';for(let i=s;i<=e;i++)opts+=`<option value="${i}" ${i===ph[1]?'sel-s':''}>${mLabel(i)}</option>`;
-    pe+=`<tr><td style="text-align:left">${ph[0]}</td>`+
+    pe+=`<tr><td style="text-align:left"><input value="${String(ph[0]||'').replace(/"/g,'&quot;')}" onchange="renamePhase('${p.id}',${k},this.value)" style="width:100%;min-width:150px;padding:4px 6px;font-size:13px" aria-label="Tên phase"></td>`+
         `<td><select data-k="${k}" data-edge="1" onchange="setPhase('${p.id}',this)">${Array.from({length:cols},(_,c)=>`<option value="${s+c}" ${s+c===ph[1]?'selected':''}>${mLabel(s+c)}</option>`).join('')}</select></td>`+
-        `<td><select data-k="${k}" data-edge="2" onchange="setPhase('${p.id}',this)">${Array.from({length:cols},(_,c)=>`<option value="${s+c}" ${s+c===ph[2]?'selected':''}>${mLabel(s+c)}</option>`).join('')}</select></td></tr>`;
+        `<td><select data-k="${k}" data-edge="2" onchange="setPhase('${p.id}',this)">${Array.from({length:cols},(_,c)=>`<option value="${s+c}" ${s+c===ph[2]?'selected':''}>${mLabel(s+c)}</option>`).join('')}</select></td>`+
+        `<td><button class="x" onclick="delPhase('${p.id}',${k})" title="Xóa phase" aria-label="Xóa phase">✕</button></td></tr>`;
   });
-  document.getElementById('phaseEdit').innerHTML=pe+'</tbody></table><p class="hint">Đổi tháng phase → Gantt vẽ lại ngay. (Đồng bộ allocation theo phase: backlog Phase 2.)</p>';
+  pe+='</tbody></table>';
+  if(!p.phases.length)pe+='<p style="color:var(--muted);font-size:13px;margin:8px 0 0">Chưa có phase nào — bấm "+ Thêm phase" để vẽ roadmap.</p>';
+  pe+=`<div class="btnrow" style="margin-top:10px"><button class="btn sm" onclick="addPhase('${p.id}')">+ Thêm phase</button></div>`+
+      '<p class="hint">Sửa tên/tháng phase → Gantt vẽ lại ngay. Phase là vạch mốc roadmap; allocation nhập riêng ở bảng dưới. (Đồng bộ allocation theo phase: backlog Phase 2.)</p>';
+  document.getElementById('phaseEdit').innerHTML=pe;
   renderAlloc(p);
 }
 function setProjStart(id,v){const p=projects.find(x=>x.id===id);
@@ -972,6 +976,24 @@ function setPhase(id,sel){
   const p=projects.find(x=>x.id===id),k=+sel.dataset.k,edge=+sel.dataset.edge,val=+sel.value;
   if(edge===1){p.phases[k][1]=Math.min(val,p.phases[k][2]);}else{p.phases[k][2]=Math.max(val,p.phases[k][1]);}
   renderDetail();markEdited(p);
+}
+function renamePhase(id,k,val){
+  const p=projects.find(x=>x.id===id);if(!p||!p.phases[k])return;
+  p.phases[k][0]=(val||'').trim()||('Phase '+(k+1));
+  renderDetail();markEdited(p);
+}
+function addPhase(id){
+  const p=projects.find(x=>x.id===id);if(!p)return;
+  const s=mDiff(ANCHOR,p.start),e=mDiff(ANCHOR,p.end);
+  /* mặc định nối tiếp ngay sau phase cuối (liền mạch); nếu chưa có phase thì bắt đầu từ đầu dự án */
+  let st=s; if(p.phases.length)st=Math.min(p.phases[p.phases.length-1][2]+1,e);
+  p.phases.push(['Phase '+(p.phases.length+1),st,Math.min(st,e)]);
+  renderDetail();markEdited(p);toast('Đã thêm phase — đổi tên/tháng rồi bấm Lưu');
+}
+function delPhase(id,k){
+  const p=projects.find(x=>x.id===id);if(!p||!p.phases[k])return;
+  const nm=p.phases[k][0];p.phases.splice(k,1);
+  renderDetail();markEdited(p);toast('Đã xóa phase "'+nm+'" — nhớ bấm Lưu');
 }
 function markEdited(p){p.lastEdit=p.pm+' · vừa sửa (chưa lưu)';setDirty(true);if(typeof saveData==='function')saveData();}
 let dirty=false;
