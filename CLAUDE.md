@@ -24,7 +24,7 @@ Planning tool quản lý nguồn lực đa dự án cho công ty dịch vụ dat
 resource-planner/
 ├── CLAUDE.md              ← bạn đang đọc
 ├── README.md             ← tóm tắt + checklist setup cho người mới
-├── .gitignore            ← .env* bị chặn (KHÔNG commit secret)
+├── .gitignore            ← chặn .env*/*.local/.vercel (token dev lưu .env gitignored OK, KHÔNG commit vào file track)
 ├── docs/                 ← tài liệu thiết kế (được sửa — khi đổi hướng nhớ cập nhật DECISIONS.md cùng đợt)
 │   ├── PROJECT-CONTEXT.md
 │   ├── DECISIONS.md
@@ -56,7 +56,10 @@ Mockup v17 (bản gần nhất) đã thêm 3 ràng buộc ở luồng **t4 — T
 
 ## Quy ước làm việc
 - **Cuối mỗi phase:** commit + push, message mô tả phase (vd "Phase 1: schema + seed + views"). Tạo điểm khôi phục rõ ràng.
-- **Secret:** TUYỆT ĐỐI không commit `service_role` key, LLM API key, GitHub PAT vào bất kỳ file nào. `.gitignore` đã chặn `.env*`. Anon key của Supabase được phép nhúng trong `web/index.html` (theo thiết kế Supabase + RLS — xem SPEC §7).
+- **Secret:** TUYỆT ĐỐI không commit secret vào file **được git track** (sẽ lọt vào history + push lên GitHub). Cấm gồm: `service_role` key, LLM API key, GitHub PAT, Vercel token (`vcp_…`), Supabase access token (`sbp_…`), mật khẩu tài khoản.
+  - **ĐƯỢC PHÉP lưu PAT/token phục vụ development** trong file **gitignored** (mặc định `.env` ở root — `.gitignore` đã chặn `.env`, `.env.*`, `*.local`, `.dev-secrets`). Dùng cho deploy/Management API trong phiên làm việc. Trước khi ghi token, LUÔN kiểm `git check-ignore -v <file>` để chắc nó không bị track.
+  - **Lưu ý ephemeral:** container của Claude Code web là tạm thời — file `.env` KHÔNG tồn tại ở session mới. Muốn token sống qua nhiều session: thêm vào **Environment Variables của Claude Code web environment** (hoặc GitHub Secrets cho workflow), không phải file trong repo.
+  - Anon key của Supabase được phép nhúng trong `web/index.html` (theo thiết kế Supabase + RLS — xem SPEC §7).
 - **Khi đổi hướng thiết kế:** cập nhật `docs/DECISIONS.md` (và SPEC nếu cần) để Claude Chat và Claude Code không lệch. Đây là điểm đồng bộ chung giữa hai nơi.
 - **Sửa thiết kế & mockup:** Claude Code ĐƯỢC PHÉP đổi thiết kế, sửa mockup, thử UX trực tiếp tại đây — không cần chuyển qua Claude Chat. Điều kiện duy nhất: khi đổi hướng thiết kế, cập nhật `docs/DECISIONS.md` (và SPEC nếu cần) ngay trong cùng đợt sửa để mọi session sau không lệch.
 
