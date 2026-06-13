@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resource Planner — Mockup v17</title>
+<title>Resource Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@600;700&display=swap" rel="stylesheet">
 <style>
@@ -263,8 +263,9 @@ body.role-pm .fin-only{display:none!important}
     <div class="card">
       <h2>Dư địa nhận thêm việc <span class="tag" title="Người-tháng = 1 người làm full-time 1 tháng. VD 3.5 người-tháng = chứa thêm được khối việc bằng 3.5 tháng-công của 1 người.">tổng người-tháng còn rảnh theo role ⓘ</span></h2>
       <div style="margin-bottom:6px;font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap" title="Chọn đúng khoảng tháng bạn định nhận việc — VD cân nhắc 1 dự án chạy 6/2026→10/2026 thì đặt Từ 2026-06, Đến 2026-10. Dư địa = tổng năng lực còn trống trong khoảng đó.">Đo dư địa trong khoảng:
-        Từ <input type="month" id="slackFrom" min="2026-01" max="2031-12" style="width:auto;padding:4px 8px" onchange="renderCEO()">
-        đến <input type="month" id="slackTo" min="2026-01" max="2031-12" style="width:auto;padding:4px 8px" onchange="renderCEO()">
+        Từ <input type="month" id="slackFrom" style="width:auto;padding:4px 8px" onchange="renderCEO()">
+        đến <input type="month" id="slackTo" style="width:auto;padding:4px 8px" onchange="renderCEO()">
+        <span id="slackLenBadge" style="display:inline-block;padding:3px 10px;border-radius:99px;background:var(--moss-soft);color:var(--moss);font-weight:600;font-size:12px"></span>
         <button class="btn sm" onclick="resetSlackRange()" title="Đặt lại = toàn bộ khung kế hoạch">↺ Toàn khung</button>
       </div>
       <div id="slackRangeNote" style="margin-bottom:10px;font-size:12px;color:var(--muted)"></div>
@@ -654,7 +655,6 @@ body.role-pm .fin-only{display:none!important}
   </div>
 </div>
 <div class="toast" id="toast"></div>
-<div class="mockbanner">MOCKUP v17 · dữ liệu demo tương tác</div>
 
 <script>
 /* =================== DỮ LIỆU DEMO =================== */
@@ -1263,7 +1263,10 @@ function renderCostBreakdown(p){
   if(!rows)rows='<tr><td colspan="4" style="text-align:left;color:var(--muted)">Chưa có phân bổ role-tháng nào — nhập ở bảng Phân bổ phía trên.</td></tr>';
   const other=+p.otherCost||0,mgmt=projMgmtCost(p),total=labor+other+mgmt,rev=+p.revenue||0,margin=rev-total;
   const srow=(lbl,val,extra='')=>`<tr style="${extra}"><td style="text-align:left">${lbl}</td><td></td><td></td><td class="mono">${fmtM(val)}</td></tr>`;
-  box.innerHTML='<thead><tr><th style="text-align:left">Người / phần chưa gán</th><th>Rate (tr/tháng)</th><th>Người-tháng</th><th>Chi phí (tr)</th></tr></thead><tbody>'+
+  box.innerHTML='<thead><tr><th style="text-align:left">Người / phần chưa gán</th>'+
+    '<th title="Rate cá nhân quy về triệu/tháng: theo giờ = giá giờ × 160h ÷ 1000; theo tháng = đúng giá tháng. Dòng &quot;chưa gán&quot; = trung bình rate người của role đó.">Rate (tr/tháng) ⓘ</th>'+
+    '<th title="Người-tháng = Σ (% gán ÷ 100) cộng qua các tháng dự án. VD: gán 100% suốt 3 tháng = 3; gán 50% trong 4 tháng = 2.">Người-tháng ⓘ</th>'+
+    '<th title="Chi phí = Rate (tr/tháng) × Người-tháng (triệu VND).">Chi phí (tr) ⓘ</th></tr></thead><tbody>'+
     rows+
     `<tr style="border-top:2px solid var(--line);font-weight:600"><td style="text-align:left">Σ Chi phí nhân sự</td><td></td><td class="mono">${Math.round(assignedPM*100)/100}+</td><td class="mono">${fmtM(labor)}</td></tr>`+
     srow('+ Chi phí khác',other)+
@@ -1411,12 +1414,20 @@ function renderCEO(){
   if(isNaN(fromIdx)||fromIdx<0)fromIdx=0;
   if(isNaN(toIdx))toIdx=defTo;
   if(toIdx<fromIdx)toIdx=fromIdx;
-  if(toIdx>defTo+60)toIdx=defTo+60;                 /* chặn chọn quá xa (>5 năm sau dự án cuối) */
+  if(toIdx>fromIdx+1199)toIdx=fromIdx+1199;          /* chỉ chặn runaway (~100 năm) — thực tế không giới hạn */
   const rangeLen=toIdx-fromIdx+1;
+  const badge=document.getElementById('slackLenBadge');
+  if(badge)badge.textContent=rangeLen+' tháng';
   const noteEl=document.getElementById('slackRangeNote');
-  if(noteEl)noteEl.innerHTML=`Đang đo <b>${labAbs(fromIdx)} → ${labAbs(toIdx)}</b> (${rangeLen} tháng). ${toIdx>lastActive&&lastActive>=0?`Phần từ ${labAbs(lastActive+1)} là sau khi mọi dự án hiện tại kết thúc → năng lực trống gần như toàn bộ.`:''}`;
+  if(noteEl)noteEl.innerHTML=`Đo từ <b>${labAbs(fromIdx)}</b> đến <b>${labAbs(toIdx)}</b> — <b>${rangeLen} tháng</b> (tính cả tháng đầu & cuối). ${toIdx>lastActive&&lastActive>=0?`Phần từ ${labAbs(lastActive+1)} là sau khi mọi dự án hiện tại kết thúc → năng lực trống gần như toàn bộ.`:''}`;
+  /* sắp xếp: role đang dùng trong dự án lên trước, role thường chưa dùng ở giữa, role quản lý xuống cuối */
+  const roleUsed=r=>months.some((m,i)=>demand[r]&&demand[r][i]>0);
+  const orderedRoles=[...ROLES].sort((a,b)=>{
+    const ka=MGMT_ROLES.includes(a)?2:(roleUsed(a)?0:1), kb=MGMT_ROLES.includes(b)?2:(roleUsed(b)?0:1);
+    return ka-kb||ROLES.indexOf(a)-ROLES.indexOf(b);
+  });
   let sl='';
-  for(const r of ROLES){
+  for(const r of orderedRoles){
     const realCap=empsByRole(r).length;   /* số người THẬT của role (không tính declaredCap) */
     let freeSum=0,shortMonths=[];
     for(let i=fromIdx;i<=toIdx;i++){
@@ -1426,12 +1437,14 @@ function renderCEO(){
     }
     if(freeSum<=0&&!shortMonths.length)continue;
     const freeRound=Math.round(freeSum*10)/10;
+    const avg=Math.round((freeSum/rangeLen)*10)/10;   /* TRUNG BÌNH người rảnh mỗi tháng — số dễ hiểu cho CEO */
+    const detail=`<small style="color:var(--muted)">(≈ ${freeRound} người-tháng / ${rangeLen} tháng)</small>`;
     let verdict,col;
-    if(MGMT_ROLES.includes(r)){verdict=`vai trò quản lý — chi phí tính qua <b>management%</b>, không giao việc dự án trực tiếp${freeRound>0?` (danh nghĩa còn ~${freeRound} người-tháng)`:''}`;col='var(--muted)';}
+    if(MGMT_ROLES.includes(r)){verdict=`vai trò quản lý — chi phí tính qua <b>management%</b>, không giao việc dự án trực tiếp`;col='var(--muted)';}
     else if(realCap===0){verdict=`năng lực ${declaredCap[r]||0} người là KHAI BÁO — chưa có ai thật trong đội. Cần tuyển trước khi nhận việc cần ${r}`;col='var(--idle)';}
-    else if(shortMonths.length){verdict=`còn ~${freeRound} người-tháng rảnh, nhưng ĐÃ thiếu ở ${shortMonths.join(', ')} — tuyển trước khi nhận thêm`;col='var(--idle)';}
-    else if(freeRound>=rangeLen*0.5){verdict=`còn ~${freeRound} người-tháng rảnh — thoải mái nhận thêm việc`;col='var(--moss)';}
-    else{verdict=`còn ~${freeRound} người-tháng rảnh — nhận thêm có chừng mực`;col='var(--moss)';}
+    else if(shortMonths.length){verdict=`trung bình <b>~${avg} người</b> rảnh/tháng ${detail}, nhưng có tháng THIẾU (${shortMonths.join(', ')}) — tuyển/giãn lịch trước khi nhận thêm`;col='var(--idle)';}
+    else if(avg>=0.5){verdict=`trung bình <b>~${avg} người</b> rảnh/tháng ${detail} — thoải mái nhận thêm việc`;col='var(--moss)';}
+    else{verdict=`trung bình <b>~${avg} người</b> rảnh/tháng ${detail} — nhận thêm có chừng mực`;col='var(--moss)';}
     sl+=`<div class="conflict"><span class="when" style="min-width:80px;color:${col}">${r}</span><span class="why">${verdict}</span></div>`;
   }
   document.getElementById('ceoSlack').innerHTML=sl||'<div class="empty">Mọi role đều kín trong khoảng này — cân nhắc tuyển trước khi nhận thêm việc.</div>';
