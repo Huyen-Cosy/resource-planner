@@ -916,7 +916,7 @@ function renderConflicts(demand){
     }
   });
   outer: for(let i=0;i<months.length;i++){
-    for(const r of ['DS','DA','DE']){
+    for(const r of ['DS','DA','DE'].filter(x=>demand[x])){   /* bỏ qua role đã bị xóa khỏi catalog */
       const d=demand[r][i];
       if(d>0&&d<roleCapacity(r)*0.5){
         h+=`<div class="conflict surplus"><span class="when">${mLabel(i)}</span><span class="why"><b>${roleName[r]}</b> chỉ dùng ${d}/${roleCapacity(r)} — cân nhắc nhận thêm việc hoặc dồn lịch</span></div>`;
