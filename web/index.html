@@ -350,6 +350,11 @@ body.role-pm .fin-only{display:none!important}
     <div id="timeCtl" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px"></div>
     <div class="matrixwrap" id="ganttBox"></div>
     <div id="phaseEdit" style="margin-top:14px"></div>
+    <div class="btnrow" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px;align-items:center">
+      <button class="btn primary" onclick="saveDetail()">💾 Lưu thay đổi dự án</button>
+      <span class="dirty-ind" style="display:none;font-size:12px;color:var(--idle)">● có thay đổi chưa lưu</span>
+      <span class="hint" style="margin-left:auto;font-size:12px">1 nút Lưu = lưu hết: roadmap · phân bổ · gán người · tài chính</span>
+    </div>
   </div>
   <div class="card">
     <h2>Phân bổ nguồn lực (estimate) <span class="tag">sửa số → bức tranh công ty đổi theo ngay</span></h2>
@@ -358,7 +363,7 @@ body.role-pm .fin-only{display:none!important}
     <div class="note idlenote" id="soldNote" style="display:none"></div>
     <div class="note warn" id="projWarn" style="display:none"></div>
     <div class="btnrow">
-      <button class="btn primary" id="saveDetailBtn" onclick="saveDetail()">Lưu thay đổi</button>
+      <button class="btn primary" id="saveDetailBtn" onclick="saveDetail()">💾 Lưu thay đổi dự án</button>
       <span id="dirtyFlag" style="display:none;font-size:12px;color:var(--idle)">● có thay đổi chưa lưu</span>
       <span class="spacer" style="flex:1"></span>
       <select id="addRoleSel3" style="width:auto;padding:6px 8px"></select>
@@ -387,8 +392,16 @@ body.role-pm .fin-only{display:none!important}
       <p class="hint" style="margin:8px 0 0">Đại diện chi phí <b>PO / Tech Lead / Data Lead</b> (Trung, Bách, Dung) — không tính giờ trực tiếp mà cộng dưới dạng % overhead. Mỗi dự án đặt mức riêng; đổi số là margin cập nhật ngay.</p>
     </div>
     <div class="kpis" id="finKpis"></div>
+    <h3 style="margin:18px 0 6px;font-size:14px">Chi tiết cấu thành chi phí <span class="tag">rate từng người đã gán + phần chưa gán → ra đúng con số trên</span></h3>
+    <div class="matrixwrap"><table class="alloc" id="costBreakdown"></table></div>
+    <h3 style="margin:18px 0 6px;font-size:14px">Burn chi phí theo tháng <span class="tag">chi phí NS từng tháng + lũy kế vs doanh thu</span></h3>
     <div class="matrixwrap"><table class="matrix" id="finTable"></table></div>
     <p class="hint">Chi phí tháng = Σ chi phí từng người được gán (% × rate cá nhân). Slot chưa gán người → ước lượng theo rate trung bình của role. Rate cá nhân + level cấu hình ở tab Cấu hình (nhạy cảm — bản thật giới hạn quyền xem). Ô đỏ khi chi phí lũy kế vượt doanh thu.</p>
+    <div class="btnrow" style="margin-top:6px;border-top:1px solid var(--line);padding-top:12px;align-items:center">
+      <button class="btn primary" onclick="saveDetail()">💾 Lưu thay đổi dự án</button>
+      <span class="dirty-ind" style="display:none;font-size:12px;color:var(--idle)">● có thay đổi chưa lưu</span>
+      <span class="hint" style="margin-left:auto;font-size:12px">Lưu cả doanh thu · chi phí khác · management% vào Supabase</span>
+    </div>
   </div>
 </section>
 
@@ -1016,7 +1029,8 @@ function delPhase(id,k){
 }
 function markEdited(p){p.lastEdit=p.pm+' · vừa sửa (chưa lưu)';setDirty(true);if(typeof saveData==='function')saveData();}
 let dirty=false;
-function setDirty(v){dirty=v;document.getElementById('dirtyFlag').style.display=v?'inline':'none';}
+function setDirty(v){dirty=v;const f=document.getElementById('dirtyFlag');if(f)f.style.display=v?'inline':'none';
+  document.querySelectorAll('.dirty-ind').forEach(e=>e.style.display=v?'inline':'none');}
 function saveDetail(){
   const p=projects.find(x=>x.id===cur);
   p.lastEdit=p.pm+' · '+new Date().toLocaleDateString('vi-VN')+' (đã lưu)';
@@ -1220,6 +1234,46 @@ function renderFinance(p){
     r3+=`<td class="cell ${over?'short':(rev&&cumTotal>rev*0.8?'idle':'ok')}">${rev?Math.round(cumTotal/rev*100)+'%':'—'}</td>`;
   }
   document.getElementById('finTable').innerHTML=h+r1+'</tr>'+r2+'</tr>'+r3+'</tr></tbody>';
+  renderCostBreakdown(p);
+}
+/* Bảng chi tiết cách ra chi phí: từng người đã gán (rate cá nhân) + phần chưa gán (rate TB role) → margin */
+function renderCostBreakdown(p){
+  const box=document.getElementById('costBreakdown');if(!box)return;
+  const s=mDiff(ANCHOR,p.start),e=Math.min(mDiff(ANCHOR,p.end),months.length-1);
+  const perEmp={},roleUn={};                       /* eid→người-tháng ; role→người-tháng chưa gán */
+  for(const r in p.alloc){
+    for(let i=s;i<=e;i++){
+      const need=av(p,r,i);if(need<=0)continue;
+      const cell=p.assign&&p.assign[r]&&p.assign[r][i];
+      let aFTE=0;
+      if(cell)for(const eid in cell){const fte=(+cell[eid]||0)/100;if(fte<=0)continue;aFTE+=fte;perEmp[eid]=(perEmp[eid]||0)+fte;}
+      const un=Math.max(need-aFTE,0);if(un>0)roleUn[r]=(roleUn[r]||0)+un;
+    }
+  }
+  let rows='',labor=0,assignedPM=0;
+  Object.keys(perEmp).sort((a,b)=>empMonthlyCost(empById(b))*perEmp[b]-empMonthlyCost(empById(a))*perEmp[a]).forEach(eid=>{
+    const emp=empById(eid),rate=empMonthlyCost(emp),pm=perEmp[eid],cost=rate*pm;labor+=cost;assignedPM+=pm;
+    const note=emp&&emp.rateType==='hourly'?`${emp.rate} nghìn/giờ × ${HOURS_PER_MONTH}h ÷ 1000 = ${fmtM(rate)} tr/tháng`:`cố định ${fmtM(rate)} tr/tháng`;
+    rows+=`<tr><td style="text-align:left">${empName(eid)} <small style="color:var(--muted)">${(emp||{}).level||''} · ${(emp||{}).role||''}</small></td>`+
+      `<td class="mono" title="${note}">${fmtM(rate)} ⓘ</td><td class="mono">${Math.round(pm*100)/100}</td><td class="mono">${fmtM(cost)}</td></tr>`;
+  });
+  Object.keys(roleUn).forEach(r=>{
+    const rate=avgRoleCost(r),pm=roleUn[r],cost=rate*pm;labor+=cost;
+    rows+=`<tr style="color:var(--muted)"><td style="text-align:left"><i>Chưa gán — ${r}</i> <small>(rate TB role)</small></td>`+
+      `<td class="mono" title="trung bình rate người ${r} đang active">${fmtM(rate)}</td><td class="mono">${Math.round(pm*100)/100}</td><td class="mono">${fmtM(cost)}</td></tr>`;
+  });
+  if(!rows)rows='<tr><td colspan="4" style="text-align:left;color:var(--muted)">Chưa có phân bổ role-tháng nào — nhập ở bảng Phân bổ phía trên.</td></tr>';
+  const other=+p.otherCost||0,mgmt=projMgmtCost(p),total=labor+other+mgmt,rev=+p.revenue||0,margin=rev-total;
+  const srow=(lbl,val,extra='')=>`<tr style="${extra}"><td style="text-align:left">${lbl}</td><td></td><td></td><td class="mono">${fmtM(val)}</td></tr>`;
+  box.innerHTML='<thead><tr><th style="text-align:left">Người / phần chưa gán</th><th>Rate (tr/tháng)</th><th>Người-tháng</th><th>Chi phí (tr)</th></tr></thead><tbody>'+
+    rows+
+    `<tr style="border-top:2px solid var(--line);font-weight:600"><td style="text-align:left">Σ Chi phí nhân sự</td><td></td><td class="mono">${Math.round(assignedPM*100)/100}+</td><td class="mono">${fmtM(labor)}</td></tr>`+
+    srow('+ Chi phí khác',other)+
+    srow(`+ Management (${(+p.mgmtPct||0)}% × NS+khác)`,mgmt)+
+    srow('= Tổng chi phí',total,'font-weight:600')+
+    srow('Doanh thu hợp đồng',rev)+
+    `<tr style="font-weight:700;color:${margin<0?'var(--alert)':'var(--moss)'}"><td style="text-align:left">= Margin</td><td></td><td></td><td class="mono">${fmtM(margin)} (${rev?Math.round(margin/rev*100):0}%)</td></tr>`+
+    '</tbody>';
 }
 function onOtherCost(val){const p=projects.find(x=>x.id===cur);p.otherCost=parseFloat(String(val).replace(',','.'))||0;markEdited(p);renderFinance(p);renderProjects();refreshCompany();}
 function onRevenue(val){const p=projects.find(x=>x.id===cur);p.revenue=parseFloat(String(val).replace(',','.'))||0;markEdited(p);renderFinance(p);renderProjects();refreshCompany();renderCEO&&renderCEO();}
