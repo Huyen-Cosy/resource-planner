@@ -461,35 +461,38 @@ body.role-pm .fin-only{display:none!important}
   <div class="pagehead"><h1>Tạo dự án mới</h1><span class="sub">tiêu chí càng đủ — AI estimate càng sát</span></div>
 
   <div class="card">
-    <h2>Bước 1 — Thông tin & tiêu chí estimation <span class="tag">đầu vào cho cả nhập tay lẫn AI</span></h2>
+    <h2>Bước 1 — Thông tin dự án <span class="tag">nhập tay — các trường này sẽ LƯU và hiện ở Chi tiết dự án</span></h2>
     <div class="grid3">
       <div><label>Tên dự án</label><input type="text" id="pName" value="Dashboard vận hành kho — Khách E"></div>
-      <div><label>Loại dự án</label><select id="pType"><option>BI_DASHBOARD</option><option>DWH_BUILD</option><option>DATA_MIGRATION</option><option>CONSULTING</option><option>OTHER</option></select></div>
+      <div><label>Loại dự án</label><select id="pType"></select></div>
       <div><label>PM phụ trách</label><input type="text" id="pPM" value="Hiếu"></div>
       <div><label>Tháng bắt đầu</label><input type="month" id="pStart" value="2026-08" min="2026-06" max="2030-12" onchange="onStartChange()"></div>
-      <div><label>Deadline cứng (nếu có) <span class="tag" style="font-weight:400">chỉ là mốc tham chiếu</span></label><input type="month" id="pDeadline" value="2026-12" min="2026-06" max="2030-12" onchange="renderManual()"></div>
       <div><label>Mức ưu tiên</label><select id="pPrio"><option>P1 — cam kết hợp đồng</option><option selected>P2 — quan trọng</option><option>P3 — linh hoạt</option></select></div>
+      <div class="fin-only"><label>Giá trị hợp đồng — doanh thu (triệu VND)</label><input type="number" id="pRevenue" value="900" min="0" step="10"></div>
     </div>
     <div class="grid3">
-      <div><label>Khách hàng</label><select id="clientType"><option>Khách mới (chưa từng hợp tác)</option><option>Khách cũ — đã hiểu hệ thống</option></select></div>
-      <div><label>Hiện trạng dữ liệu của khách</label><select id="dataMat"><option>Chưa có hạ tầng data (xây từ đầu)</option><option selected>Có DB rời rạc, chưa có DWH</option><option>Đã có DWH, chỉ làm lớp trên</option></select></div>
-      <div><label>Số nguồn dữ liệu cần tích hợp</label><input type="number" id="nSources" value="4" min="1"></div>
-      <div><label>Số dashboard / module dự kiến</label><input type="number" id="nDeliv" value="3" min="1"></div>
-      <div><label>Độ phức tạp nghiệp vụ</label><select id="complexity"><option>Thấp — báo cáo chuẩn</option><option selected>Trung bình — có logic riêng</option><option>Cao — nhiều quy tắc đặc thù</option></select></div>
-      <div><label>Khách có đội IT đối ứng?</label><select id="itSupport"><option>Có — phối hợp kỹ thuật tốt</option><option selected>Hạn chế — chỉ 1 đầu mối</option><option>Không có</option></select></div>
+      <div><label>Deadline cứng (nếu có) <span class="tag" style="font-weight:400">chỉ là mốc tham chiếu</span></label><input type="month" id="pDeadline" value="2026-12" min="2026-06" max="2030-12" onchange="renderManual()"></div>
     </div>
-    <div class="grid3">
-      <div><label>Giá trị hợp đồng — doanh thu (triệu VND)</label><input type="number" id="pRevenue" value="900" min="0" step="10"></div>
-    </div>
-    <label>Đính kèm hợp đồng / tài liệu sẵn có (PDF, DOCX)</label>
-    <div class="dropzone" onclick="addDoc()">⬆ Kéo thả hoặc bấm để chọn — hợp đồng, SOW, BRD, biên bản khảo sát...</div>
-    <div class="chips" id="docChips"></div>
-    <p class="hint">Tài liệu được lưu vào Supabase Storage; nội dung text được trích xuất và đưa vào prompt để AI estimate dựa trên scope thật trong hợp đồng.</p>
+    <details style="margin-top:16px;border:1px dashed var(--line);border-radius:8px;padding:10px 14px;background:rgba(127,127,127,.04)">
+      <summary style="cursor:pointer;font-weight:600;font-size:13px">🤖 Tiêu chí & tài liệu cho AI Generate <span class="tag" style="background:var(--idle-soft);color:var(--idle)">Phase sau — sẽ phát triển</span></summary>
+      <p class="hint" style="margin:8px 0 12px">Các trường dưới đây chỉ phục vụ tính năng <b>AI Generate</b> (tự sinh phân bổ role×tháng từ tiêu chí + tài liệu hợp đồng) — <b>sẽ phát triển ở phase sau</b>. Khi <b>nhập tay</b> thì KHÔNG cần điền; chúng hiện chưa được lưu vào dự án (nên không xuất hiện ở Chi tiết dự án).</p>
+      <div class="grid3">
+        <div><label>Khách hàng</label><select id="clientType"><option>Khách mới (chưa từng hợp tác)</option><option>Khách cũ — đã hiểu hệ thống</option></select></div>
+        <div><label>Hiện trạng dữ liệu của khách</label><select id="dataMat"><option>Chưa có hạ tầng data (xây từ đầu)</option><option selected>Có DB rời rạc, chưa có DWH</option><option>Đã có DWH, chỉ làm lớp trên</option></select></div>
+        <div><label>Số nguồn dữ liệu cần tích hợp</label><input type="number" id="nSources" value="4" min="1"></div>
+        <div><label>Số dashboard / module dự kiến</label><input type="number" id="nDeliv" value="3" min="1"></div>
+        <div><label>Độ phức tạp nghiệp vụ</label><select id="complexity"><option>Thấp — báo cáo chuẩn</option><option selected>Trung bình — có logic riêng</option><option>Cao — nhiều quy tắc đặc thù</option></select></div>
+        <div><label>Khách có đội IT đối ứng?</label><select id="itSupport"><option>Có — phối hợp kỹ thuật tốt</option><option selected>Hạn chế — chỉ 1 đầu mối</option><option>Không có</option></select></div>
+      </div>
+      <label style="margin-top:10px">Đính kèm hợp đồng / tài liệu sẵn có (PDF, DOCX)</label>
+      <div class="dropzone" onclick="addDoc()">⬆ Kéo thả hoặc bấm để chọn — hợp đồng, SOW, BRD, biên bản khảo sát...</div>
+      <div class="chips" id="docChips"></div>
+    </details>
   </div>
 
-  <div class="grid2">
+  <div>
     <div class="card">
-      <h2>Cách 1 — Tự nhập toàn bộ <span class="tag">không cần AI</span></h2>
+      <h2>Cách 1 — Tự nhập toàn bộ <span class="tag">cách dùng hiện tại — nhập đầy đủ</span></h2>
       <div class="note" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <span style="font-weight:600">Khung tháng kế hoạch</span>
         <button class="btn sm" onclick="bumpMonths(-1)" aria-label="Bớt 1 tháng">− tháng</button>
@@ -514,8 +517,9 @@ body.role-pm .fin-only{display:none!important}
       <div class="btnrow"><button class="btn primary" onclick="saveManual()">Lưu vào hệ thống</button></div>
       <p class="hint">Tên, loại, PM lấy từ Bước 1. <b>Khung tháng</b> nới/thu tự do bằng nút <b>± tháng</b> — deadline chỉ là vạch mốc (cột viền vàng). <b>Chỉ nhập được số trong phạm vi phase</b> (ô gạch chéo = ngoài phase, khóa). Phase phải <b>liền mạch</b> mới lưu được; allocation vượt deadline vẫn lưu nhưng sẽ cảnh báo. Chỉ lưu khi bấm nút.</p>
     </div>
-    <div class="card">
-      <h2>Cách 2 — AI Generate <span class="tag">free LLM qua Edge Function</span></h2>
+    <div class="card" style="opacity:.72">
+      <h2>Cách 2 — AI Generate <span class="tag" style="background:var(--idle-soft);color:var(--idle)">🚧 Phase sau — chưa hoạt động</span></h2>
+      <div class="note warn" style="margin:0 0 12px">Tính năng AI tự sinh estimation <b>sẽ phát triển ở phase sau</b> (Edge Function + LLM). Phần dưới chỉ là bản xem trước giao diện — hiện hãy dùng <b>Cách 1 — Tự nhập toàn bộ</b> ở trên.</div>
       <label>Mô tả thêm bằng lời (tùy chọn — bổ sung cho tiêu chí ở trên)</label>
       <textarea>Khách E vận hành 3 kho hàng, muốn dashboard theo dõi tồn kho và hiệu suất xuất nhập theo thời gian thực. Dữ liệu hiện nằm trong ERP cũ + file Excel.</textarea>
       <div class="btnrow">
@@ -681,6 +685,7 @@ const HOURS_PER_MONTH=160; /* quy đổi hourly → monthly để tính chi phí
 const MGMT_ROLES=['PO','ARCH','DATA_LEAD'];
 /* rate gợi ý mặc định theo level (triệu/người-tháng) — dùng khi tạo nhanh hoặc chưa gán người */
 let levelRate={Intern:12,Junior:28,Middle:45,Senior:70,Lead:95};
+let PROJECT_TYPES=['BI_DASHBOARD','DATA_PLATFORM','DATA_PIPELINE','AI_ML'];  /* nạp lại từ ref_project_types khi load */
 /* chi phí 1 người trong 1 tháng nếu làm 100% (triệu) */
 function empMonthlyCost(e){
   if(!e)return 0;
@@ -1878,6 +1883,9 @@ function phaseGaps(){
 /* allocation có số ở tháng nằm ngoài mọi phase không (để cảnh báo/dọn) */
 function renderManual(){
   const box=document.getElementById('manualPhases');if(!box)return;
+  /* nạp options Loại dự án từ DB (khớp FK) — rebuild khi số lượng đổi, giữ lựa chọn */
+  const ptSel=document.getElementById('pType');
+  if(ptSel&&ptSel.options.length!==PROJECT_TYPES.length){const cur=ptSel.value;ptSel.innerHTML=PROJECT_TYPES.map(t=>`<option>${t}</option>`).join('');if(cur&&PROJECT_TYPES.includes(cur))ptSel.value=cur;}
   const [s,e]=manualRange();
   const dl=deadlineIdx();
   const durEl=document.getElementById('durLabel');
@@ -2321,6 +2329,10 @@ async function loadFromSupabase(){
   ROLES=roles.map(r=>r.code);
   roleName={}; declaredCap={};
   roles.forEach(r=>{ roleName[r.code]=r.name; declaredCap[r.code]=+r.declared_capacity||0; });
+
+  /* --- loại dự án (khớp FK ref_project_types) --- */
+  const {data:ptypes}=await sb.from('ref_project_types').select('code').order('code');
+  if(ptypes&&ptypes.length)PROJECT_TYPES=ptypes.map(x=>x.code);
 
   /* --- level rates (finance) — pm giữ default để hàm chi phí không vỡ --- */
   if(IS_FINANCE){
