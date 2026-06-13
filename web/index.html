@@ -172,7 +172,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--moss);outline-of
   .kpi{padding:11px 12px}
   .kpi .v{font-size:18px}
   /* GHIM cột đầu (role/tên dự án) khi bảng cuộn ngang — đọc bảng dày trên phone dễ hơn hẳn */
-  .matrixwrap table th:first-child,.matrixwrap table td:first-child{position:sticky;left:0;background:var(--card);z-index:2;box-shadow:2px 0 5px -3px rgba(0,0,0,.28)}
+  .matrixwrap table th:first-child,.matrixwrap table td:first-child{position:sticky;left:0;background:var(--card);z-index:2;box-shadow:2px 0 5px -3px rgba(0,0,0,.28);max-width:46vw;white-space:normal;word-break:break-word}
   .matrix td.cell{min-width:56px;font-size:11.5px}
   /* cảnh báo / dư địa xuống dòng gọn */
   .conflict{flex-wrap:wrap;gap:4px 10px;padding:10px 2px}
@@ -356,10 +356,12 @@ body.role-pm .fin-only{display:none!important}
     </div>
   </div>
   <div class="card">
+    <div class="matrixwrap">
     <table>
       <thead><tr><th>Dự án</th><th>Loại</th><th>PM</th><th>Ưu tiên</th><th>Thời gian</th><th class="fin-only">Margin KH</th><th>Trạng thái</th><th>Báo cáo</th><th>Xóa</th></tr></thead>
       <tbody id="projRows"></tbody>
     </table>
+    </div>
     <p class="hint">Bấm dòng để mở chi tiết · cột <b>Báo cáo</b> = đưa dự án vào báo cáo tổng · nút <b>✕</b> = xóa hẳn khỏi tool.</p>
   </div>
 </section>
@@ -510,6 +512,10 @@ body.role-pm .fin-only{display:none!important}
       <div class="dropzone" onclick="addDoc()">⬆ Kéo thả hoặc bấm để chọn — hợp đồng, SOW, BRD, biên bản khảo sát...</div>
       <div class="chips" id="docChips"></div>
     </details>
+    <div class="btnrow" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px;align-items:center;flex-wrap:wrap">
+      <button class="btn primary" onclick="quickSaveDefault()">💾 Lưu nhanh với mặc định</button>
+      <span class="hint" style="margin:0">Tự sinh <b>1 phase</b> phủ toàn khung + phân bổ <b>DE · DA · PM</b> mỗi tháng 1 người (khung tháng theo <b>Tháng bắt đầu → Deadline</b>). Tinh chỉnh thêm sau ở <b>Chi tiết dự án</b>. Hoặc cuộn xuống <b>Cách 1</b> để nhập tay từ đầu.</span>
+    </div>
   </div>
 
   <div>
@@ -705,6 +711,8 @@ const HOURS_PER_MONTH=160; /* quy đổi hourly → monthly để tính chi phí
 /* Role quản lý (PO/Tech Lead/Data Lead): chi phí tính qua management% (overhead), KHÔNG allocate
    giao việc dự án trực tiếp (D5). Dùng để gắn nhãn ở bảng "Dư địa nhận thêm việc". */
 const MGMT_ROLES=['PO','ARCH','DATA_LEAD'];
+/* 4 role chính của 1 dự án data — ưu tiên hiển thị đầu + để mặc định 1 người (what-if, lưu nhanh) */
+const PRIMARY_ROLES=['DE','DA','PM','DESIGN'];
 /* rate gợi ý mặc định theo level (triệu/người-tháng) — dùng khi tạo nhanh hoặc chưa gán người */
 let levelRate={Intern:12,Junior:28,Middle:45,Senior:70,Lead:95};
 let PROJECT_TYPES=['BI_DASHBOARD','DATA_PLATFORM','DATA_PIPELINE','AI_ML'];  /* nạp lại từ ref_project_types khi load */
@@ -1514,14 +1522,17 @@ function renderWfRoles(){
   const ws=document.getElementById('wfStart');                 /* min theo ANCHOR động, không hardcode */
   if(ws){ws.min=ANCHOR;if(mDiff(ANCHOR,ws.value)<0)ws.value=ANCHOR;}
   const box=document.getElementById('wfRoles');if(!box||box.dataset.init)return;
-  /* thứ tự: role đang được dùng trong dự án lên trước (mặc định 1 người), quản lý + role không PIC xuống dưới (để trống) */
+  /* thứ tự: 4 role chính (DE→DA→PM→DESIGN) lên đầu & mặc định 1; rồi role dùng trong dự án (vd LARK); rồi khác; quản lý/không-PIC cuối. Chỉ 4 role chính có default 1 */
   const dem=computeDemand(projects);
   const used=r=>dem[r]&&dem[r].some(d=>d>0);
-  const rkey=r=>{ if(used(r))return 0; if(MGMT_ROLES.includes(r)||empsByRole(r).length===0)return 2; return 1; };
-  const ord=[...ROLES].sort((a,b)=>rkey(a)-rkey(b)||ROLES.indexOf(a)-ROLES.indexOf(b));
-  box.innerHTML='<label style="margin-top:0">Nhu cầu nhân sự dự kiến (người/tháng, áp đều suốt thời gian) — <span style="color:var(--muted)">role có trong dự án để sẵn 1, role khác để trống</span>:</label>'+
+  const prio=r=>{ const pi=PRIMARY_ROLES.indexOf(r); if(pi>=0)return pi;          /* 0..3: 4 role chính đúng thứ tự */
+    if(used(r))return 10;                                                          /* role khác có trong dự án (LARK) */
+    if(MGMT_ROLES.includes(r)||empsByRole(r).length===0)return 30;                 /* quản lý / không PIC */
+    return 20; };                                                                  /* có người, chưa dùng */
+  const ord=[...ROLES].sort((a,b)=>prio(a)-prio(b)||ROLES.indexOf(a)-ROLES.indexOf(b));
+  box.innerHTML='<label style="margin-top:0">Nhu cầu nhân sự dự kiến (người/tháng, áp đều suốt thời gian) — <span style="color:var(--muted)">4 role chính để sẵn 1, role khác để trống</span>:</label>'+
     '<div class="btnrow" style="margin-top:6px;flex-wrap:wrap">'+
-    ord.map(r=>`<div><label style="margin-top:0;font-size:11px">${r}</label><input id="wf-${r}" value="${used(r)?1:''}" inputmode="decimal" style="width:54px;text-align:center"></div>`).join('')+
+    ord.map(r=>`<div><label style="margin-top:0;font-size:11px">${r}</label><input id="wf-${r}" value="${PRIMARY_ROLES.includes(r)?1:''}" inputmode="decimal" style="width:54px;text-align:center"></div>`).join('')+
     '</div>';
   box.dataset.init='1';
 }
@@ -2026,6 +2037,19 @@ function manualProject(){
     phases:manual.phases.map(x=>[...x]),alloc:JSON.parse(JSON.stringify(manual.alloc)),roles:Object.keys(manual.alloc)};
 }
 function manualHasData(){return Object.keys(manual.alloc).some(r=>(manual.alloc[r]||[]).some(v=>+v>0));}
+/* Lưu nhanh từ Bước 1: 1 phase phủ toàn khung + DE/DA/PM mỗi tháng 1 người, rồi lưu luôn */
+window.quickSaveDefault=async function(){
+  if(!fval('pName').trim()){toast('Nhập Tên dự án ở Bước 1 trước','warn');return;}
+  manualDur=defaultDur();                       /* khung tháng = Tháng bắt đầu → Deadline */
+  const [s,e]=manualRange();
+  manual.phases=[['Phase 1',s,e]];              /* 1 phase phủ toàn khung */
+  manual.alloc={};
+  const roles=PRIMARY_ROLES.filter(r=>ROLES.includes(r));
+  if(!roles.length){toast('Catalog không còn role chính (DE/DA/PM/DESIGN) — thêm lại ở Cấu hình hoặc nhập tay ở Cách 1','warn');return;}
+  roles.forEach(r=>{ manual.alloc[r]=[]; for(let i=s;i<=e;i++)manual.alloc[r][i]=1; });   /* 4 role chính, mỗi tháng 1 người */
+  renderManual();
+  await saveManual();                           /* validate + persistNewProject + mở Chi tiết */
+};
 function manualFitCheck(){
   const box=document.getElementById('manualFit');
   if(!manualHasData()){box.style.display='none';return;}
