@@ -311,7 +311,7 @@ body.role-pm .fin-only{display:none!important}
   </div>
   <div class="card">
     <table>
-      <thead><tr><th>Dự án</th><th>Loại</th><th>PM</th><th>Ưu tiên</th><th>Thời gian</th><th>Margin KH</th><th>Trạng thái</th><th>Báo cáo</th><th>Xóa</th></tr></thead>
+      <thead><tr><th>Dự án</th><th>Loại</th><th>PM</th><th>Ưu tiên</th><th>Thời gian</th><th class="fin-only">Margin KH</th><th>Trạng thái</th><th>Báo cáo</th><th>Xóa</th></tr></thead>
       <tbody id="projRows"></tbody>
     </table>
     <p class="hint">Bấm dòng để mở chi tiết · cột <b>Báo cáo</b> = đưa dự án vào báo cáo tổng · nút <b>✕</b> = xóa hẳn khỏi tool.</p>
@@ -354,7 +354,7 @@ body.role-pm .fin-only{display:none!important}
     <div id="assignBox"></div>
     <p class="hint">Gán ai vào role nào, tháng nào, bao nhiêu %. Phần này không bắt buộc — bỏ qua nếu chỉ cần kế hoạch ở mức số lượng. Gán xong, xem tải từng người ở tab Nguồn lực cá nhân.</p>
   </div>
-  <div class="card">
+  <div class="card fin-only">
     <h2>Tài chính dự án <span class="tag">doanh thu vs burn chi phí kế hoạch</span></h2>
     <div class="btnrow" style="margin:0 0 12px;flex-wrap:wrap;gap:16px">
       <div><label style="margin-top:0">Doanh thu hợp đồng (triệu)</label><input type="number" id="revInput" value="0" min="0" step="50" onchange="onRevenue(this.value)" style="width:160px"></div>
@@ -543,6 +543,15 @@ body.role-pm .fin-only{display:none!important}
     <p class="hint">Mỗi estimation lưu kèm <span class="mono">model_version</span> — sau vài tháng so được model nào estimate sát thực tế nhất từ <span class="mono">v_estimate_vs_actual</span>.</p>
   </div>
 
+  <div class="card fin-only">
+    <h2>Quản lý người dùng <span class="tag">app_users · finance gán quyền pm → finance</span></h2>
+    <div class="matrixwrap"><table class="alloc" id="userTable">
+      <thead><tr><th>Email</th><th>Quyền hiện tại</th><th>Thao tác</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p class="hint">User mới tự đăng ký qua Supabase Auth → mặc định quyền <b>pm</b> (chỉ thấy effort, ẩn tiền). Finance nâng lên <b>finance</b> để mở khóa tài chính + quản trị. Hạ quyền finance → pm chỉ làm trực tiếp trong Supabase (tránh tự khóa nhầm). Quyền ghi do RLS <span class="mono">au_fin_write</span> bảo đảm — pm không gọi được.</p>
+  </div>
+
   <div class="card">
     <h2>Danh mục role <span class="tag">ref_roles · thêm role tùy công ty</span></h2>
     <div class="chips" id="roleChips" style="margin-top:0;margin-bottom:12px"></div>
@@ -554,7 +563,7 @@ body.role-pm .fin-only{display:none!important}
     <p class="hint">Thêm role mới (Finance Support, QA, DevOps...) sẽ xuất hiện trong bảng năng lực, phân bổ dự án, và khi gán nhân sự.</p>
   </div>
 
-  <div class="card">
+  <div class="card fin-only">
     <h2>Rate mặc định theo level <span class="tag">triệu/người-tháng · dùng khi tạo nhanh hoặc chưa gán người</span></h2>
     <div class="matrixwrap"><table class="alloc" id="levelRateTable"><thead><tr><th>Level</th><th>Rate gợi ý (triệu/tháng)</th></tr></thead><tbody></tbody></table></div>
     <p class="hint">Đây chỉ là rate gợi ý theo cấp bậc. Chi phí thật của dự án tính theo rate của <b>từng cá nhân được gán</b> (đặt trong bảng nhân sự bên dưới). Khi chưa gán ai, hệ thống ước lượng bằng rate trung bình của role.</p>
@@ -563,7 +572,7 @@ body.role-pm .fin-only{display:none!important}
   <div class="card">
     <h2>Quản lý nhân sự <span class="tag">employees · tên, role, level, rate cá nhân</span></h2>
     <div class="matrixwrap"><table class="alloc" id="empCrud">
-      <thead><tr><th>Tên</th><th>Role</th><th>Level</th><th>Loại rate</th><th>Rate</th><th>≈ triệu/tháng</th><th>Trạng thái</th><th></th></tr></thead>
+      <thead><tr><th>Tên</th><th>Role</th><th>Level</th><th class="fin-only">Loại rate</th><th class="fin-only">Rate</th><th class="fin-only">≈ triệu/tháng</th><th>Trạng thái</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="btnrow" style="align-items:flex-end;flex-wrap:wrap">
@@ -889,7 +898,7 @@ function renderKPIs(demand){
   projects.filter(p=>p.status==='active').forEach(p=>{const rev=p.revenue||0;totRev+=rev;totMargin+=projMargin(p);});
   document.getElementById('kpis').innerHTML=
     `<div class="kpi"><div class="v">${n}</div><div class="l">dự án đang chạy</div></div>`+
-    `<div class="kpi ${totMargin<0?'bad':'good'}"><div class="v">${fmtM(totMargin)}</div><div class="l">Σ margin kế hoạch (triệu) · ${totRev?Math.round(totMargin/totRev*100):0}% doanh thu</div></div>`+
+    `<div class="kpi fin-only ${totMargin<0?'bad':'good'}"><div class="v">${fmtM(totMargin)}</div><div class="l">Σ margin kế hoạch (triệu) · ${totRev?Math.round(totMargin/totRev*100):0}% doanh thu</div></div>`+
     (firstShort!==null?`<div class="kpi bad"><div class="v">${mLabel(firstShort)}</div><div class="l">tháng thiếu hụt gần nhất</div></div>`
       :`<div class="kpi good"><div class="v">OK</div><div class="l">không tháng nào thiếu hụt</div></div>`)+
     (worst.r?`<div class="kpi bad"><div class="v">${worst.r} ${Math.round(worst.gap*10)/10}</div><div class="l">role căng nhất (${mLabel(worst.mi)})</div></div>`
@@ -906,11 +915,11 @@ function renderProjects(){
     projects.map(p=>{
       const rev=p.revenue||0,pct=rev?Math.round(projMargin(p)/rev*100):null;
       const mg=pct===null?'—':`<span style="color:${pct<0?'var(--alert)':pct<10?'var(--idle)':'var(--moss)'}">${pct}%</span>`;
-      return `<tr class="rowlink" onclick="openProject('${p.id}')"><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.pm}</td><td class="prio">${p.prio}</td><td class="mono" style="font-size:12px">${fmt(p)}</td><td class="mono" style="font-size:12px">${mg}</td><td>${badge[p.status]}</td>`+
+      return `<tr class="rowlink" onclick="openProject('${p.id}')"><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.pm}</td><td class="prio">${p.prio}</td><td class="mono" style="font-size:12px">${fmt(p)}</td><td class="mono fin-only" style="font-size:12px">${mg}</td><td>${badge[p.status]}</td>`+
         `<td onclick="event.stopPropagation()" style="text-align:center"><input type="checkbox" ${p.inReport!==false?'checked':''} onchange="toggleReport('${p.id}',this.checked)" title="Đưa vào báo cáo tổng"></td>`+
         `<td onclick="event.stopPropagation()" style="text-align:center"><button class="btn" style="padding:2px 9px" onclick="deleteProject('${p.id}')" title="Xóa dự án">✕</button></td></tr>`;
     }).join('')+
-    otherProjects.map(p=>`<tr style="color:var(--muted)" title="Dự án ${p.status==='draft'?'nháp':'đã đóng'} — chưa có trang chi tiết để mở"><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.pm}</td><td class="prio">${p.prio}</td><td class="mono" style="font-size:12px">${p.time}</td><td class="mono" style="font-size:12px">—</td><td>${badge[p.status]}</td><td></td><td></td></tr>`).join('');
+    otherProjects.map(p=>`<tr style="color:var(--muted)" title="Dự án ${p.status==='draft'?'nháp':'đã đóng'} — chưa có trang chi tiết để mở"><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.pm}</td><td class="prio">${p.prio}</td><td class="mono" style="font-size:12px">${p.time}</td><td class="mono fin-only" style="font-size:12px">—</td><td>${badge[p.status]}</td><td></td><td></td></tr>`).join('');
 }
 
 /* ===== Tab 3 — chi tiết dự án đang chọn ===== */
@@ -1238,12 +1247,12 @@ function renderCEO(){
   months.forEach((m,i)=>{for(const r of ROLES){const g=roleCapacity(r)-demand[r][i];if(g<0)shortMonths++;}});
   document.getElementById('ceoKpis').innerHTML=
     `<div class="kpi"><div class="v">${list.length}</div><div class="l">dự án trong phạm vi</div></div>`+
-    `<div class="kpi"><div class="v">${fmtM(totRev)}</div><div class="l">tổng doanh thu đã ký (triệu)</div></div>`+
-    `<div class="kpi ${totMargin<0?'bad':'good'}"><div class="v">${fmtM(totMargin)}</div><div class="l">tổng margin kế hoạch · ${totRev?Math.round(totMargin/totRev*100):0}%</div></div>`+
-    `<div class="kpi ${lossCount?'bad':'good'}"><div class="v">${lossCount}</div><div class="l">dự án lỗ kế hoạch</div></div>`+
+    `<div class="kpi fin-only"><div class="v">${fmtM(totRev)}</div><div class="l">tổng doanh thu đã ký (triệu)</div></div>`+
+    `<div class="kpi fin-only ${totMargin<0?'bad':'good'}"><div class="v">${fmtM(totMargin)}</div><div class="l">tổng margin kế hoạch · ${totRev?Math.round(totMargin/totRev*100):0}%</div></div>`+
+    `<div class="kpi fin-only ${lossCount?'bad':'good'}"><div class="v">${lossCount}</div><div class="l">dự án lỗ kế hoạch</div></div>`+
     `<div class="kpi ${shortMonths?'bad':'good'}"><div class="v">${shortMonths}</div><div class="l">lượt role-tháng thiếu người</div></div>`;
   /* bảng margin kế hoạch, sắp theo margin tăng dần (lỗ nhất lên đầu) — KHÔNG có tiến độ/burn thực */
-  let h='<thead><tr><th>Dự án</th><th>PM</th><th>Ưu tiên</th><th>Thời gian</th><th>Doanh thu</th><th>Chi phí KH</th><th>Margin KH</th><th>Đã xếp người</th></tr></thead><tbody>';
+  let h='<thead><tr><th>Dự án</th><th>PM</th><th>Ưu tiên</th><th>Thời gian</th><th class="fin-only">Doanh thu</th><th class="fin-only">Chi phí KH</th><th class="fin-only">Margin KH</th><th>Đã xếp người</th></tr></thead><tbody>';
   list.slice().sort((a,b)=>projMargin(a)-projMargin(b)).forEach(p=>{
     const rev=p.revenue||0,mg=projMargin(p),pct=rev?Math.round(mg/rev*100):0;
     let need=0,filled=0;
@@ -1254,8 +1263,8 @@ function renderCEO(){
        `<td><b>${p.name.split(' — ')[0]}</b>${p.status==='draft'?' <span class="badge draft">nháp</span>':''}</td>`+
        `<td>${p.pm}</td><td class="prio">${p.prio}</td>`+
        `<td class="mono" style="font-size:12px">${fmtYM(p.start)}→${fmtYM(p.end)}</td>`+
-       `<td class="mono">${fmtM(rev)}</td><td class="mono">${fmtM(projTotalCost(p))}</td>`+
-       `<td class="mono" style="color:${mgCol}">${fmtM(mg)} <small>(${pct}%)</small></td>`+
+       `<td class="mono fin-only">${fmtM(rev)}</td><td class="mono fin-only">${fmtM(projTotalCost(p))}</td>`+
+       `<td class="mono fin-only" style="color:${mgCol}">${fmtM(mg)} <small>(${pct}%)</small></td>`+
        `<td class="mono" style="color:${staffPct>=100?'var(--moss)':'var(--idle)'}" title="% nhu cầu role đã gán người trong kế hoạch">${staffPct}%</td></tr>`;
   });
   document.getElementById('ceoProjTable').innerHTML=h+'</tbody>';
@@ -1469,11 +1478,11 @@ function renderEmpCrud(){
       <td style="text-align:left"><input value="${e.name}" oninput="editEmp('${e.id}','name',this.value)" style="width:120px"></td>
       <td><select onchange="editEmp('${e.id}','role',this.value)" style="width:auto">${ROLES.map(r=>`<option value="${r}" ${r===e.role?'selected':''}>${r}</option>`).join('')}</select></td>
       <td><select onchange="editEmp('${e.id}','level',this.value)" style="width:auto">${LEVELS.map(lv=>`<option value="${lv}" ${lv===e.level?'selected':''}>${lv}</option>`).join('')}</select></td>
-      <td><select onchange="editEmp('${e.id}','rateType',this.value)" style="width:auto">
+      <td class="fin-only"><select onchange="editEmp('${e.id}','rateType',this.value)" style="width:auto">
         <option value="monthly" ${e.rateType==='monthly'?'selected':''}>monthly</option>
         <option value="hourly" ${e.rateType==='hourly'?'selected':''}>hourly</option></select></td>
-      <td><input value="${e.rate||0}" inputmode="numeric" onchange="editEmp('${e.id}','rate',this.value)" style="width:64px"><small style="color:var(--muted)">${e.rateType==='hourly'?'k/h':'tr/th'}</small></td>
-      <td class="mono">${Math.round(empMonthlyCost(e))}</td>
+      <td class="fin-only"><input value="${e.rate||0}" inputmode="numeric" onchange="editEmp('${e.id}','rate',this.value)" style="width:64px"><small style="color:var(--muted)">${e.rateType==='hourly'?'k/h':'tr/th'}</small></td>
+      <td class="mono fin-only">${Math.round(empMonthlyCost(e))}</td>
       <td><button class="btn sm" onclick="toggleEmp('${e.id}')" style="${e.active?'':'opacity:.6'}">${e.active?'Active':'Nghỉ'}</button></td>
       <td><button class="btn sm" onclick="delEmp('${e.id}')" aria-label="Xóa">✕</button></td>
     </tr>`).join('');
@@ -2107,7 +2116,7 @@ async function afterLogin(){
   const rb=document.getElementById('userRole'); rb.textContent=IS_FINANCE?'finance':'pm'; rb.className='role '+(IS_FINANCE?'finance':'pm');
   document.getElementById('userChip').style.display='flex';
   document.getElementById('appRoot').style.display='';
-  try{ await loadFromSupabase(); renderAll(); document.getElementById('footCount').textContent=projects.length+' dự án · '+employees.length+' nhân sự'; }
+  try{ await loadFromSupabase(); renderAll(); if(IS_FINANCE)renderUsers(); document.getElementById('footCount').textContent=projects.length+' dự án · '+employees.length+' nhân sự'; }
   catch(e){ dbErr(e,'tải dữ liệu'); }
 }
 
@@ -2319,6 +2328,29 @@ window.onLevelRateEdit=async function(inp){
   _onLevelRateEdit(inp);
   const lv=inp.dataset.lv, v=levelRate[lv];
   const {error}=await sb.from('ref_level_rates').upsert({level:lv,monthly_rate:v}); if(error)dbErr(error,'lưu rate level');
+};
+
+/* --- t6: quản lý người dùng (finance gán quyền pm → finance) --- */
+window.renderUsers=async function(){
+  const tb=document.querySelector('#userTable tbody'); if(!tb)return;
+  if(!IS_FINANCE){ tb.innerHTML=''; return; }
+  const {data,error}=await sb.from('app_users').select('user_id,email,role').order('email');
+  if(error)return dbErr(error,'tải danh sách người dùng');
+  tb.innerHTML=(data||[]).map(u=>{
+    const self=u.user_id===CURRENT_USER.id;
+    const badge=u.role==='finance'?'<span class="badge active">finance</span>':'<span class="badge draft">pm</span>';
+    const act=u.role==='pm'
+      ? `<button class="btn sm" onclick="promoteUser('${u.user_id}')">Nâng → finance</button>`
+      : (self?'<small style="color:var(--muted)">bạn</small>':'<small style="color:var(--muted)">—</small>');
+    return `<tr><td style="text-align:left">${u.email||'(chưa rõ email)'}</td><td>${badge}</td><td>${act}</td></tr>`;
+  }).join('')||'<tr><td colspan="3" style="text-align:center;color:var(--muted)">Chưa có người dùng nào.</td></tr>';
+};
+window.promoteUser=async function(uid){
+  if(!requireFinance())return;
+  const {error}=await sb.from('app_users').update({role:'finance'}).eq('user_id',uid);
+  if(error)return dbErr(error,'nâng quyền người dùng');
+  toast('Đã nâng quyền tài khoản → finance');
+  renderUsers();
 };
 
 /* khởi động */
