@@ -131,6 +131,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--moss);outline-of
 .chip{display:inline-flex;align-items:center;gap:7px;background:#EDEFE9;border:1px solid var(--line);border-radius:99px;padding:4px 6px 4px 12px;font-size:12px}
 .chip .x{width:17px;height:17px;border-radius:50%;border:0;background:var(--line);color:var(--muted);cursor:pointer;font-size:11px;line-height:1}
 .chip .x:hover{background:var(--alert);color:#fff}
+.chip.over{background:var(--alert-soft);border-color:var(--alert)}
 
 .modelrow{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px dashed var(--line);flex-wrap:wrap}
 .modelrow:last-of-type{border:none}
@@ -1028,7 +1029,18 @@ function renderAssign(p){
   const s=mDiff(ANCHOR,p.start),e=mDiff(ANCHOR,p.end);
   /* đọc theo danh sách role THAM GIA đã khai báo, không suy ngầm từ alloc>0 */
   const rlist=projRoles(p);
+  /* cảnh báo quá tải xuyên dự án: tổng tải của 1 người (gồm cả dự án khác) > 100% trong tháng */
+  const overs=[];
+  for(const r in p.assign)(p.assign[r]||[]).forEach((cell,i)=>{ if(cell)for(const eid in cell){
+    if(overs.some(o=>o.eid===eid&&o.i===i))continue;
+    const tot=empLoad(eid,i); if(tot>100)overs.push({eid,i,tot}); }});
   let h='';
+  if(overs.length){
+    overs.sort((a,b)=>b.tot-a.tot||a.i-b.i);
+    h+=`<div class="note warn" style="margin:0 0 14px"><b>⚠ ${overs.length} lượt quá tải</b> — tổng tải &gt; 100% (cộng cả dự án khác). Giảm % hoặc đổi người:<ul style="margin:6px 0 0;padding-left:18px">`+
+      overs.slice(0,12).map(o=>`<li>${empName(o.eid)} <small style="color:var(--muted)">${(empById(o.eid)||{}).level||''}</small> — <b style="color:var(--alert)">${Math.round(o.tot)}%</b> ở ${mLabel(o.i)} <small style="color:var(--muted)">(${empLoadBreakdown(o.eid,o.i).map(x=>x.name+' '+x.pct+'%').join(' + ')})</small></li>`).join('')+
+      (overs.length>12?`<li>… và ${overs.length-12} lượt nữa</li>`:'')+`</ul></div>`;
+  }
   for(const r of rlist){
     if(!p.assign[r])p.assign[r]=[];
     h+=`<div style="margin-bottom:16px"><div style="font-weight:500;margin-bottom:6px"><b>${r}</b> · ${roleName[r]||r}</div>`;
@@ -1053,12 +1065,15 @@ function renderAssign(p){
       if(Math.abs(assignedFTE-need)<0.001){col='var(--moss)';cls='đủ';}
       else if(assignedFTE<need){col='var(--idle)';cls='thiếu';}
       else{col='#C9772E';cls='dư';}
-      let chips=Object.keys(cell).map(eid=>
-        `<span class="chip" style="margin:2px 4px 2px 0" title="${empLabel(eid)}">${empName(eid)} <small style="color:var(--muted)">${(empById(eid)||{}).level||''}</small> `+
+      let chips=Object.keys(cell).map(eid=>{
+        const tot=empLoad(eid,i),over=tot>100;
+        const tip=over?`${empLabel(eid)} — QUÁ TẢI ${Math.round(tot)}% (${empLoadBreakdown(eid,i).map(x=>x.name+' '+x.pct+'%').join(' + ')})`:empLabel(eid);
+        return `<span class="chip${over?' over':''}" style="margin:2px 4px 2px 0" title="${tip}">${empName(eid)} <small style="color:var(--muted)">${(empById(eid)||{}).level||''}</small> `+
         `<input value="${cell[eid]}" inputmode="decimal" onchange="setAssignPct('${p.id}','${r}',${i},'${eid}',this.value)" `+
         `style="width:46px;text-align:center;padding:2px 4px;font-size:12px;margin:0 2px">%`+
-        `<button class="x" onclick="removeAssign('${p.id}','${r}',${i},'${eid}')" aria-label="Bỏ gán">✕</button></span>`
-      ).join('');
+        (over?`<span style="color:var(--alert);font-weight:600" title="Tổng tải ${Math.round(tot)}% > 100%">⚠</span>`:'')+
+        `<button class="x" onclick="removeAssign('${p.id}','${r}',${i},'${eid}')" aria-label="Bỏ gán">✕</button></span>`;
+      }).join('');
       const avail=empsByRole(r).filter(emp=>!cell[emp.id]);
       const addSel=avail.length?`<select style="width:auto;padding:3px 6px;font-size:12px" onchange="addAssign('${p.id}','${r}',${i},this.value);this.selectedIndex=0">`+
         `<option value="">+ gán...</option>${avail.map(emp=>`<option value="${emp.id}">${emp.name} · ${emp.level||''}</option>`).join('')}</select>`:'';
@@ -1341,6 +1356,12 @@ function empLoad(eid,i){ /* tổng % người eid được gán trong tháng ind
   for(const p of projects) if(p.status==='active'&&p.assign)
     for(const r in p.assign){const cell=p.assign[r][i];if(cell&&cell[eid])pct+=+cell[eid];}
   return pct;
+}
+function empLoadBreakdown(eid,i){ /* chi tiết dự án + % người eid được gán trong tháng i (mọi dự án active) */
+  const out=[];
+  for(const p of projects) if(p.status==='active'&&p.assign)
+    for(const r in p.assign){const cell=p.assign[r][i];if(cell&&cell[eid])out.push({name:(p.name||'').split(' — ')[0],r,pct:+cell[eid]});}
+  return out;
 }
 let curEmp='e1';
 function renderEmp(eid){
