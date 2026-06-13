@@ -211,8 +211,8 @@ FK `role_code`→ref_roles (AI không bịa role), CHECK percent 0–100, headco
 ## 8. Kế hoạch thực thi (làm tuần tự, đánh dấu rõ MVP)
 
 **MVP (build trước — đây là phần lõi tạo giá trị ngay):**
-- Phase 1: schema.sql + seed.sql + views + constraints. Thêm `app_users` (role `finance`/`pm`) + **RLS theo role** che dữ liệu tiền khỏi `pm` (D19). In hướng dẫn tạo Supabase + chạy SQL.
-- Phase 2: web app t1/t2/t3/t4(Cách 1 tự nhập)/t6 — CRUD đầy đủ, nhập tay, bức tranh công ty, tài chính cơ bản, quản lý role/nhân sự/rate. **Thêm màn đăng nhập (Supabase Auth) + ẩn cụm tài chính (KPI Σ margin t1, tài chính dự án t2/t3, rate ở t6) khi role=`pm`** (D19). Test bằng seed. Hướng dẫn deploy.
+- Phase 1: schema.sql + seed.sql + views + constraints. Thêm `app_users` (role `finance`/`pm`) + **trigger tạo dòng role mặc định `pm` khi có user mới** + **RLS theo role** che dữ liệu tiền khỏi `pm` (chỉ `finance`/admin ghi được `app_users`) (D19). In hướng dẫn tạo Supabase + chạy SQL.
+- Phase 2: web app t1/t2/t3/t4(Cách 1 tự nhập)/t6 — CRUD đầy đủ, nhập tay, bức tranh công ty, tài chính cơ bản, quản lý role/nhân sự/rate. **Thêm màn đăng nhập (Supabase Auth, user tự đăng ký — Cách A) + màn admin "Quản lý người dùng" (gán role `pm`↔`finance`) + ẩn cụm tài chính (KPI Σ margin t1, tài chính dự án t2/t3, rate ở t6) khi role=`pm`** (D19). Test bằng seed. Hướng dẫn deploy.
 - Phase 3: gán người (t3 phần assign + t7 Nguồn lực cá nhân).
 - Phase 4: trang CEO (t0) gồm dư địa + what-if; đóng dự án (t5).
 
