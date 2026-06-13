@@ -1,0 +1,12 @@
+# Secrets — KHÔNG BAO GIỜ commit (service_role / LLM API key / GitHub PAT / Vercel / Supabase tokens)
+.env
+.env.*
+*.local
+.dev-secrets
+
+# Vercel deploy state (link cục bộ)
+.vercel
+
+# OS / editor
+.DS_Store
+*.swp
