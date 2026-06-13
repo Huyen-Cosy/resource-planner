@@ -39,7 +39,8 @@ projCostMonth(p,i)    = Σ theo role:
                                                        + (need − assignedFTE) × avgRoleCost(r)
                           nếu chưa gán: need × avgRoleCost(r)
 projCost(p)           = Σ projCostMonth(p, mọi tháng)
-projTotalCost(p)      = projCost(p) + otherCost
+projMgmtCost(p)       = (projCost(p) + otherCost) × mgmt_pct/100   -- overhead vai quản lý (D16)
+projTotalCost(p)      = projCost(p) + otherCost + projMgmtCost(p)
 projMargin(p)         = revenue − projTotalCost(p)
 demand[r][i]          = Σ alloc[r][i] của mọi dự án active   (mức role)
 gap[r][i]             = roleCapacity(r) − demand[r][i]   (<0 thiếu, >0 dư)
@@ -107,6 +108,7 @@ create table projects (
   end_month date not null,
   revenue numeric default 0,             -- giá trị hợp đồng (triệu) — thước đo lời/lỗ
   other_cost numeric default 0,          -- chi phí khác ngoài lương (triệu)
+  mgmt_pct numeric default 0,            -- % chi phí management (overhead vai quản lý không tính giờ) — xem D16
   roles text[] default '{}',             -- danh sách role tham gia (tường minh)
   created_by text not null,
   playbook_version text,
