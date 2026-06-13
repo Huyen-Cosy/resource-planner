@@ -62,3 +62,7 @@
 - **t5 đóng dự án build theo SPEC §5** (ghi allocations kind='actual', status='closed') — mockup chỉ demo phần delta %, không demo đổi status.
 - **Vòng đời draft hoãn** → BACKLOG B9. MVP: dự án lưu là active ngay.
 - **Thang severity cảnh báo CEO** (trộn triệu VND với người×100) giữ nguyên heuristic, tinh chỉnh sau khi CEO dùng thật.
+
+## D15. Dư địa (slack) ở trang CEO phân biệt năng lực THẬT vs KHAI BÁO
+**Vì sao:** đợt dogfood dự án Thanh Yến (06/2026) phát hiện trang CEO quảng cáo "DS còn ~18 người-tháng rảnh — thoải mái nhận thêm việc" trong khi công ty **không có Data Scientist nào** — con số đến từ `declaredCap` fallback. CEO dễ bị dẫn tới quyết định nhận việc dựa trên một "ghế trống ảo".
+**Hệ quả:** trong khối *dư địa nhận thêm việc*, role có `realCap=0` (đếm từ employees active) nhưng `declaredCap>0` → KHÔNG hiển thị verdict "thoải mái nhận thêm", mà cảnh báo "năng lực N người là KHAI BÁO — chưa có ai thật, cần tuyển trước khi nhận việc cần role này". `roleCapacity()` vẫn fallback `declaredCap` cho **bức tranh công ty (t1)** theo D3 (tính năng phải chạy khi chưa có người) — chỉ phần **khuyến nghị nhận-việc của CEO** mới đòi người thật. Cùng đợt: bỏ hardcode `min="2026-06"` ở ô tháng what-if, set `min=ANCHOR` động để không lệch khi mốc kế hoạch khác.

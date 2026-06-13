@@ -1154,6 +1154,7 @@ function renderCEO(){
   const horizon=rk==='all'?months.length:Math.min(+rk,months.length);
   let sl='';
   for(const r of ROLES){
+    const realCap=empsByRole(r).length;   /* số người THẬT của role (không tính declaredCap) */
     let freeSum=0,shortMonths=[];
     for(let i=0;i<horizon;i++){
       const gap=roleCapacity(r)-demand[r][i];
@@ -1162,7 +1163,8 @@ function renderCEO(){
     if(freeSum<=0&&!shortMonths.length)continue;
     const freeRound=Math.round(freeSum*10)/10;
     let verdict,col;
-    if(shortMonths.length){verdict=`còn ~${freeRound} người-tháng rảnh, nhưng ĐÃ thiếu ở ${shortMonths.join(', ')} — tuyển trước khi nhận thêm`;col='var(--idle)';}
+    if(realCap===0){verdict=`năng lực ${declaredCap[r]||0} người là KHAI BÁO — chưa có ai thật trong đội. Cần tuyển trước khi nhận việc cần ${r}`;col='var(--idle)';}
+    else if(shortMonths.length){verdict=`còn ~${freeRound} người-tháng rảnh, nhưng ĐÃ thiếu ở ${shortMonths.join(', ')} — tuyển trước khi nhận thêm`;col='var(--idle)';}
     else if(freeRound>=horizon*0.5){verdict=`còn ~${freeRound} người-tháng rảnh — thoải mái nhận thêm việc`;col='var(--moss)';}
     else{verdict=`còn ~${freeRound} người-tháng rảnh — nhận thêm có chừng mực`;col='var(--moss)';}
     sl+=`<div class="conflict"><span class="when" style="min-width:80px;color:${col}">${r}</span><span class="why">${verdict}</span></div>`;
@@ -1171,6 +1173,8 @@ function renderCEO(){
   renderWfRoles();
 }
 function renderWfRoles(){
+  const ws=document.getElementById('wfStart');                 /* min theo ANCHOR động, không hardcode */
+  if(ws){ws.min=ANCHOR;if(mDiff(ANCHOR,ws.value)<0)ws.value=ANCHOR;}
   const box=document.getElementById('wfRoles');if(!box||box.dataset.init)return;
   box.innerHTML='<label style="margin-top:0">Nhu cầu nhân sự dự kiến (người/tháng, áp đều suốt thời gian):</label>'+
     '<div class="btnrow" style="margin-top:6px;flex-wrap:wrap">'+

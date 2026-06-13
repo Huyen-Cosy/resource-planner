@@ -43,6 +43,11 @@
 **Vì sao hoãn:** MVP lưu dự án là active ngay — đủ cho luồng chính. Thêm vòng đời draft kéo theo quyết định draft có/không tính vào fit-check, what-if, dư địa. (Phán quyết PO 06/2026, xem DECISIONS D14.)
 **Khi làm:** khi PM cần soạn kế hoạch chào giá/chưa ký mà không làm nhiễu bức tranh công ty.
 
+## B10. What-if ước lượng chi phí tuyển khi role thiếu người
+**Là gì:** hiện what-if tính chi phí dự án giả định bằng rate trung bình role (`avgRoleCost`). Khi role bị thiếu (phải tuyển/thuê ngoài), chi phí tuyển/thuê thật KHÔNG nằm trong margin → margin lạc quan hơn thực tế. Cảnh báo "tạo thiếu hụt" hiện đã bù lại về mặt định tính (nhắc CEO sẽ phải tuyển/lùi lịch/từ chối).
+**Vì sao hoãn:** bản what-if cơ bản đã trả lời câu hỏi chính ("có nên nhận thêm việc"). Ước lượng chi phí tuyển cần thêm giả định (rate thuê ngoài, lead time tuyển) — là tinh chỉnh, không phải lõi.
+**Khi làm:** cùng đợt B5 (what-if nâng cao). (Phát hiện CEO-5, dogfood Thanh Yến 06/2026.)
+
 ---
 ## Tính năng đã CÓ trong mockup nhưng thuộc Phase sau MVP (nhắc để không build nhầm thứ tự)
 - Nút AI Generate + Edge Function llm-proxy + cấu hình AI model động → Phase 5.
