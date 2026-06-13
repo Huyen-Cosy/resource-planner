@@ -2543,10 +2543,8 @@ window.saveManual=async function(){
   projects.push(np); logAudit(np.pm,'tạo dự án '+np.name.split(' — ')[0]);
   refreshCompany();renderProjects();renderDetail();selectClose(np.id);
   manual={phases:[],alloc:{}};manualDur=null;renderManual();
-  document.getElementById('modalText').innerHTML=`Dự án <b>${np.name}</b> đã được lưu vào Supabase và fit vào Bức tranh công ty.`;
-  document.getElementById('modalView').onclick=()=>{closeModal();openProject(np.id);};
-  document.getElementById('modal').style.display='flex';
-  toast('Đã tạo dự án trên Supabase');
+  toast('Đã tạo "'+np.name.split(' — ')[0]+'" — mở Chi tiết dự án');
+  openProject(np.id);   /* mở thẳng Chi tiết, không popup */
 };
 
 /* --- t6: nhân sự (finance) --- */
