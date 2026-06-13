@@ -692,7 +692,7 @@ function projCostMonth(p,i){
   }
   return c;
 }
-function projCost(p){let c=0;months.forEach((m,i)=>{c+=projCostMonth(p,i);});return Math.round(c);}
+function projCost(p){let c=0;months.forEach((m,i)=>{c+=projCostMonth(p,i);});return c;}  /* giữ full precision khớp DB v_project_cost; làm tròn chỉ ở hiển thị (fmtM) */
 /* management cost = % của (chi phí nhân sự + chi phí khác). Đại diện cho PO/Tech Lead/Data Lead
    không tính giờ trực tiếp. mgmtPct mặc định 0 nếu dự án không khai báo. */
 function projMgmtCost(p){const base=projCost(p)+(+p.otherCost||0);return base*((+p.mgmtPct||0)/100);}
