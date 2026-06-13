@@ -1487,9 +1487,14 @@ function renderWfRoles(){
   const ws=document.getElementById('wfStart');                 /* min theo ANCHOR động, không hardcode */
   if(ws){ws.min=ANCHOR;if(mDiff(ANCHOR,ws.value)<0)ws.value=ANCHOR;}
   const box=document.getElementById('wfRoles');if(!box||box.dataset.init)return;
-  box.innerHTML='<label style="margin-top:0">Nhu cầu nhân sự dự kiến (người/tháng, áp đều suốt thời gian):</label>'+
+  /* thứ tự: role đang được dùng trong dự án lên trước (mặc định 1 người), quản lý + role không PIC xuống dưới (để trống) */
+  const dem=computeDemand(projects);
+  const used=r=>dem[r]&&dem[r].some(d=>d>0);
+  const rkey=r=>{ if(used(r))return 0; if(MGMT_ROLES.includes(r)||empsByRole(r).length===0)return 2; return 1; };
+  const ord=[...ROLES].sort((a,b)=>rkey(a)-rkey(b)||ROLES.indexOf(a)-ROLES.indexOf(b));
+  box.innerHTML='<label style="margin-top:0">Nhu cầu nhân sự dự kiến (người/tháng, áp đều suốt thời gian) — <span style="color:var(--muted)">role có trong dự án để sẵn 1, role khác để trống</span>:</label>'+
     '<div class="btnrow" style="margin-top:6px;flex-wrap:wrap">'+
-    ROLES.map(r=>`<div><label style="margin-top:0;font-size:11px">${r}</label><input id="wf-${r}" value="${r==='DE'||r==='DA'?1:0}" inputmode="decimal" style="width:54px;text-align:center"></div>`).join('')+
+    ord.map(r=>`<div><label style="margin-top:0;font-size:11px">${r}</label><input id="wf-${r}" value="${used(r)?1:''}" inputmode="decimal" style="width:54px;text-align:center"></div>`).join('')+
     '</div>';
   box.dataset.init='1';
 }
