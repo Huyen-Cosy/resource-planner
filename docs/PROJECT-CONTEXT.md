@@ -8,7 +8,8 @@ Xây **Resource Planner** — planning tool quản lý nguồn lực đa dự á
 ## Trạng thái hiện tại
 - **Đã xong:** mockup HTML (đặc tả hành vi đầy đủ, 8 tab), spec, DECISIONS.md, BACKLOG.md.
 - **Quyết định mới (06/2026):** RBAC vào MVP — PM ẩn tài chính, khóa tầng RLS, user tự đăng ký + admin gán quyền (D19). Seed dùng dữ liệu thật ideaLAB.
-- **✅ Phase 1 ĐÃ DỰNG** (branch `claude/sleepy-lovelace-i8s4bo`): `db/schema.sql` + `db/views.sql` + `db/seed.sql` + `db/README.md`. Đã test trên Postgres 16: 3 file chạy sạch; RBAC verify (pm = 0 dòng tài chính, finance = đủ). **Chưa deploy lên Supabase thật** — chờ user chạy theo `db/README.md`.
+- **✅ Phase 1 ĐÃ DỰNG**: `db/schema.sql` + `db/views.sql` + `db/seed.sql` + `db/README.md`. Đã test trên Postgres 16: 3 file chạy sạch; RBAC verify (pm = 0 dòng tài chính, finance = đủ).
+- **✅ Phase 1 ĐÃ DEPLOY lên Supabase thật (13/06/2026)**: project `resource-planner` (ref `nnqpanuezemrqyznkffy`, ap-southeast-1). Đã áp schema→views→seed; verify trên DB live: 12 nhân sự · 2 dự án · margin 34.8%/34.7%; RBAC qua JWT đạt (pm thấy `[]` ở mọi view tiền + guard chặn PM ghi cột tiền). Admin finance đầu tiên: `lethuhuyen215@gmail.com`. Lấy Project URL + anon key ở Settings → API cho Phase 2.
 - **Bước tiếp theo:** Phase 2 — `web/index.html` nối Supabase (login + ẩn cụm tài chính cho pm + màn admin "Quản lý người dùng" + báo cáo 5 phần bê từ mockup-idealab).
 
 ## 5 điều cốt lõi không được quên (chi tiết ở DECISIONS.md)
