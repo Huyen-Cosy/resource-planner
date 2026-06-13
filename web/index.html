@@ -234,6 +234,22 @@ body.role-pm .fin-only{display:none!important}
       <button class="btn" onclick="exportReportDoc()" title="Tải về file .doc mở bằng Word">📄 Xuất Word</button>
     </div>
   </div>
+  <details class="card" style="padding:12px 16px">
+    <summary style="cursor:pointer;font-weight:600;font-size:14px">ℹ️ Cách tính các con số <span class="tag">bấm để mở — đọc 30 giây là tin được số</span></summary>
+    <div style="font-size:13px;line-height:1.7;margin-top:10px;color:var(--ink)">
+      <p style="margin:0 0 8px"><b>Mọi số ở đây là KẾ HOẠCH dự kiến</b> — không phải chi tiêu thực hay tiến độ tới hôm nay. Tool dùng để quyết định trước, không theo dõi sau.</p>
+      <ul style="margin:0;padding-left:18px">
+        <li><b>Người-tháng</b> = 1 người làm full-time trong 1 tháng (gộp cả số người × thời lượng). VD "3.5 người-tháng rảnh" = chứa thêm được khối việc bằng 3.5 tháng-công của 1 người.</li>
+        <li><b>Nhu cầu</b> = tổng số người mỗi role × mỗi tháng, lấy từ kế hoạch của các dự án <b>đang chạy</b> (dự án nháp/đã đóng không tính).</li>
+        <li><b>Năng lực</b> = số người <b>thật</b> của role trong đội. Role chưa có ai thật thì dùng số "khai báo" và ghi rõ "cần tuyển".</li>
+        <li><b>Dư địa</b> = tổng (năng lực − nhu cầu) phần còn <b>dương</b>, trong khoảng tháng đang chọn. Tháng nào thiếu thì cảnh báo riêng, không bù trừ.</li>
+        <li class="fin-only"><b>Chi phí</b> = phần đã gán người tính theo <b>rate cá nhân</b> (đúng người đúng giá); phần chưa gán ước theo <b>rate trung bình của role</b>; cộng chi phí khác + <b>management%</b> (overhead PO/Tech Lead/Data Lead).</li>
+        <li class="fin-only"><b>Margin</b> = doanh thu − tổng chi phí. <b>Đây là thước đo lời/lỗ duy nhất</b> — âm là lỗ kế hoạch (hiện đỏ).</li>
+        <li><b>Đã xếp người %</b> = % nhu cầu role đã gán <b>tên người cụ thể</b> (phần còn lại mới ở mức "cần role, chưa biết ai").</li>
+        <li><b>Lượt role-tháng thiếu người</b> = số ô (role × tháng) mà nhu cầu vượt năng lực.</li>
+      </ul>
+    </div>
+  </details>
   <div class="kpis" id="ceoKpis"></div>
   <div class="card">
     <h2>Margin kế hoạch từng dự án <span class="tag">doanh thu − tổng chi phí dự kiến</span></h2>
@@ -245,13 +261,13 @@ body.role-pm .fin-only{display:none!important}
       <div id="ceoAlerts"></div>
     </div>
     <div class="card">
-      <h2>Dư địa nhận thêm việc <span class="tag">tổng người-tháng còn rảnh theo role</span></h2>
+      <h2>Dư địa nhận thêm việc <span class="tag" title="Người-tháng = 1 người làm full-time 1 tháng. VD 3.5 người-tháng = chứa thêm được khối việc bằng 3.5 tháng-công của 1 người.">tổng người-tháng còn rảnh theo role ⓘ</span></h2>
       <div style="margin-bottom:10px;font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap">Khoảng:
         <select id="slackRange" style="width:auto;padding:4px 8px" onchange="renderCEO()">
-          <option value="3">3 tháng tới</option>
-          <option value="6" selected>6 tháng tới</option>
-          <option value="12">12 tháng tới</option>
-          <option value="all">Toàn bộ</option>
+          <option value="3">3 tháng đầu khung</option>
+          <option value="6" selected>6 tháng đầu khung</option>
+          <option value="12">12 tháng đầu khung</option>
+          <option value="all">Toàn bộ khung</option>
         </select>
       </div>
       <div id="ceoSlack"></div>
@@ -1303,7 +1319,11 @@ function renderCEO(){
     `<div class="kpi fin-only ${lossCount?'bad':'good'}"><div class="v">${lossCount}</div><div class="l">dự án lỗ kế hoạch</div></div>`+
     `<div class="kpi ${shortMonths?'bad':'good'}"><div class="v">${shortMonths}</div><div class="l">lượt role-tháng thiếu người</div></div>`;
   /* bảng margin kế hoạch, sắp theo margin tăng dần (lỗ nhất lên đầu) — KHÔNG có tiến độ/burn thực */
-  let h='<thead><tr><th>Dự án</th><th>PM</th><th>Ưu tiên</th><th>Thời gian</th><th class="fin-only">Doanh thu</th><th class="fin-only">Chi phí KH</th><th class="fin-only">Margin KH</th><th>Đã xếp người</th></tr></thead><tbody>';
+  let h='<thead><tr><th>Dự án</th><th>PM</th><th>Ưu tiên</th><th>Thời gian</th>'+
+    '<th class="fin-only" title="Doanh thu hợp đồng đã ký (kế hoạch)">Doanh thu ⓘ</th>'+
+    '<th class="fin-only" title="Chi phí kế hoạch = nhân sự (rate cá nhân cho người đã gán, rate TB role cho phần chưa gán) + chi phí khác + management%">Chi phí KH ⓘ</th>'+
+    '<th class="fin-only" title="Margin kế hoạch = doanh thu − tổng chi phí. Âm = lỗ kế hoạch.">Margin KH ⓘ</th>'+
+    '<th title="% nhu cầu role đã gán tên người cụ thể trong kế hoạch">Đã xếp người ⓘ</th></tr></thead><tbody>';
   list.slice().sort((a,b)=>projMargin(a)-projMargin(b)).forEach(p=>{
     const rev=p.revenue||0,mg=projMargin(p),pct=rev?Math.round(mg/rev*100):0;
     let need=0,filled=0;
