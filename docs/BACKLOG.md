@@ -2,11 +2,10 @@
 
 > Những mục dưới đây đã được cân nhắc và **chủ động hoãn** để giữ MVP gọn. Claude Code KHÔNG tự làm sớm các mục này khi build MVP — chúng làm phình phạm vi. Khi nào làm sẽ quyết riêng.
 
-## B1. Phân quyền theo vai trò (RBAC)
+## B1. Phân quyền theo vai trò (RBAC) — ✅ ĐÃ PROMOTE VÀO MVP (06/2026, xem DECISIONS D19)
 **Là gì:** CEO/admin thấy rate + tiền; PM thường chỉ thấy người + effort, ẩn rate/margin.
-**Vì sao hoãn:** MVP là tool nội bộ tin cậy, dùng chung anon key + RLS mở. Phân quyền thật cần Supabase Auth + RLS theo user.
-**Khi làm:** khi tool mở rộng cho nhiều PM không nên thấy lương nhau. Supabase Auth bật thêm, không đập lại.
-**Lưu ý:** rate là dữ liệu nhạy cảm — mockup đã ghi chú "bản thật giới hạn quyền xem" ở các chỗ hiển thị rate.
+**Trạng thái:** KHÔNG còn hoãn. PO chốt (06/2026) kéo vào MVP vì tool có ≥2 người cùng xem và nhiều PM không nên thấy lương nhau. Làm ở mức **khóa tầng gốc (Supabase Auth + RLS theo user)**, không chỉ ẩn UI. Chi tiết quyết định: DECISIONS **D19**. Phase 1 thêm `app_users` + RLS theo role; Phase 2 thêm login + ẩn cụm tài chính khi role=`pm`.
+**Lưu ý:** rate là dữ liệu nhạy cảm — phải chặn ở RLS, vì anon key nhúng web app khiến "giấu nút UI" không đủ an toàn.
 
 ## B2. Đồng bộ allocation theo phase
 **Là gì:** khi dịch một phase (vd "modelling lùi 1 tháng"), allocation các role thuộc phase đó tự trượt theo.

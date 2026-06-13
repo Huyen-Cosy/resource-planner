@@ -203,6 +203,7 @@ FK `role_code`→ref_roles (AI không bịa role), CHECK percent 0–100, headco
 
 ## 7. Credentials (cung cấp 1 lần, không hỏi lại)
 - Supabase **anon key** trong `config.json` repo skill (private) + đầu web app → PM clone là chạy, không nhập key. Quyền giới hạn bởi RLS.
+- **Đăng nhập bắt buộc (Supabase Auth) + RLS theo user — RBAC vào MVP (D19).** 2 nhóm: `finance` (CEO + Quản trị viên, ngang quyền — thấy rate/chi phí/margin/what-if) và `pm` (chỉ nhập dự án + gán người + lớp số người; **KHÔNG** thấy rate/chi phí/margin/doanh thu/management). Số tiền bị chặn ở **tầng database (RLS/security-definer view theo role)**, không chỉ ẩn UI — vì anon key nhúng ở client nên giấu nút không đủ an toàn. Role lưu ở `app_users` (hoặc JWT claim). Anon key chung vẫn nhúng được, nhưng dữ liệu nhạy cảm chỉ trả về sau khi đăng nhập đúng role.
 - **service_role key** + **LLM API key**: chỉ trong Edge Function secrets, KHÔNG commit, KHÔNG phát cho PM.
 - GitHub: `gh auth login` 1 lần/máy (hoặc fine-grained PAT). Claude Code web: gắn repo qua nút +.
 - Cấm tuyệt đối: ghi service_role/LLM key/PAT vào bất kỳ file nào trong repo. Tạo `.gitignore` (`.env*`) từ Phase 1.
@@ -210,8 +211,8 @@ FK `role_code`→ref_roles (AI không bịa role), CHECK percent 0–100, headco
 ## 8. Kế hoạch thực thi (làm tuần tự, đánh dấu rõ MVP)
 
 **MVP (build trước — đây là phần lõi tạo giá trị ngay):**
-- Phase 1: schema.sql + seed.sql + views + constraints. In hướng dẫn tạo Supabase + chạy SQL.
-- Phase 2: web app t1/t2/t3/t4(Cách 1 tự nhập)/t6 — CRUD đầy đủ, nhập tay, bức tranh công ty, tài chính cơ bản, quản lý role/nhân sự/rate. Test bằng seed. Hướng dẫn deploy.
+- Phase 1: schema.sql + seed.sql + views + constraints. Thêm `app_users` (role `finance`/`pm`) + **RLS theo role** che dữ liệu tiền khỏi `pm` (D19). In hướng dẫn tạo Supabase + chạy SQL.
+- Phase 2: web app t1/t2/t3/t4(Cách 1 tự nhập)/t6 — CRUD đầy đủ, nhập tay, bức tranh công ty, tài chính cơ bản, quản lý role/nhân sự/rate. **Thêm màn đăng nhập (Supabase Auth) + ẩn cụm tài chính (KPI Σ margin t1, tài chính dự án t2/t3, rate ở t6) khi role=`pm`** (D19). Test bằng seed. Hướng dẫn deploy.
 - Phase 3: gán người (t3 phần assign + t7 Nguồn lực cá nhân).
 - Phase 4: trang CEO (t0) gồm dư địa + what-if; đóng dự án (t5).
 
@@ -220,7 +221,7 @@ FK `role_code`→ref_roles (AI không bịa role), CHECK percent 0–100, headco
 - Repo skill estimation + `/estimate` `/close` + vòng học norms.
 - Đính kèm tài liệu (Storage + trích text).
 
-**KHÔNG làm (xem BACKLOG.md để biết lý do hoãn):** phân quyền theo vai trò (ẩn rate với PM), đồng bộ allocation theo phase, gán effort theo phase rồi rải tháng, import HR, realtime subscription, test phủ rộng ở MVP.
+**KHÔNG làm (xem BACKLOG.md để biết lý do hoãn):** đồng bộ allocation theo phase, gán effort theo phase rồi rải tháng, import HR, realtime subscription, test phủ rộng ở MVP. *(Phân quyền theo vai trò ĐÃ chuyển vào MVP — xem D19, không còn ở danh sách hoãn.)*
 
 ## 9. Tiêu chí nghiệm thu (MVP)
 1. Seed → t1 hiển thị ma trận đúng; thêm dự án trùng tháng 7 dùng nhiều DE → cảnh báo đỏ thiếu DE kèm tên dự án.

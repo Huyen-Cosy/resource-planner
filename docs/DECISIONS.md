@@ -85,3 +85,15 @@
 - **localStorage** giữ dữ liệu qua reload (hook vào `markEdited` + import/xóa) + nút Reset về mẫu.
 - **Loại/xóa dự án:** cờ `inReport` (loại khỏi báo cáo tổng, vẫn ở tool) + nút xóa hẳn. Báo cáo + bức tranh công ty đều tính theo `reportProjects()` = active ∧ inReport.
 **⚠ RANH GIỚI CHỐNG ĐI LÙI:** `import CSV` + `localStorage` là **CẦU TẠM chỉ ở bản instance `mockup-idealab.html`** để xài mockup như sản phẩm trước khi có Supabase. **KHÔNG promote 2 thứ này vào `mockup.html`/web app thật** — bài toán multi-PM + nguồn sự thật chung là việc của **Supabase** (D9), không phải localStorage. Web app thật: PM ghi Supabase, báo cáo đọc từ đó. Khi build, chỉ **báo cáo 5 phần** mới mang sang product; phần import/persist build lại bằng Supabase.
+
+## D19. Phân quyền RBAC (PM ẩn tài chính) ĐƯA VÀO MVP, khóa ở tầng RLS — promote B1 lên sớm
+**Vì sao:** quyết định của PO (06/2026) sau khi xác nhận tool sẽ có ≥2 người cùng nhìn kết quả và nhiều PM không nên thấy lương nhau. B1 (BACKLOG) vốn hoãn vì giả định "tool nội bộ tin cậy, dùng chung anon key + RLS mở"; giả định đó không còn đúng → kéo B1 vào MVP. Lương là dữ liệu nhạy cảm, "giấu nút ở UI" KHÔNG đủ (anon key nhúng ở web app → người rành kỹ thuật moi data trực tiếp), nên phải khóa ở **tầng database (RLS theo user) + Supabase Auth**, không chỉ ẩn hiển thị.
+**Quyết định:**
+- **2 nhóm quyền** (CEO & Quản trị viên ngang nhau, gộp thành 1 tier "thấy tiền"):
+  - **`finance` (CEO + Admin):** thấy tất cả — rate, chi phí, margin, what-if, dư địa tiền.
+  - **`pm`:** chỉ nhập dự án + gán người; thấy lớp *số người / effort*; **KHÔNG thấy** rate, chi phí dự án, margin, KPI Σ margin, ô doanh thu, management cost.
+- **Bắt buộc đăng nhập** (Supabase Auth — email/password hoặc magic link). Bỏ mô hình "anon key dùng chung, không login" của MVP cũ.
+- **Khóa ở tầng gốc (RLS), không chỉ ẩn UI:** các cột/bảng tiền (rate cá nhân, `level_rate`, chi phí, revenue, margin) chỉ trả về cho role `finance`. View tài chính (`v_project_cost`, margin…) chặn ở RLS/`security definer` theo `auth` role. PM gọi API trực tiếp cũng KHÔNG lấy được số tiền.
+- **Lưu role ở đâu:** bảng `app_users` (user_id ↔ role `finance`/`pm`) hoặc custom claim trong JWT; RLS policy đọc role từ đó. Quyết định chi tiết cơ chế khi vào Phase 1.
+- **Lớp effort vẫn đầy đủ cho PM:** allocation (role×tháng), gán người, bức tranh số lượng, cảnh báo thiếu/dư người — đều KHÔNG đụng tiền nên PM thấy trọn vẹn (đúng tầng D3/D5: effort tách khỏi money).
+**Hệ quả với MVP:** Phase 1 schema thêm `app_users` + bật RLS theo role (không còn "RLS mở"); Phase 2 thêm màn đăng nhập + ẩn cụm tài chính (t1 KPI margin, t2/t3 tài chính dự án) khi role=`pm`; Phase 4 (t0 CEO) vốn chỉ dành cho `finance`. **KHÔNG vi phạm D4/D5** — rate vẫn theo cá nhân, margin vẫn là thước đo lời/lỗ duy nhất; chỉ thêm lớp *ai được xem*. Mô hình này là chuẩn ngành (Float/Runn/Forecast: planner thấy khối lượng, chỉ sếp/admin thấy tiền). Thay thế ghi chú cũ ở D5 ("nếu sau này cần che rate khỏi PM…") — giờ làm ngay, không cần "ngân sách người-tháng" thay thế vì RLS che thẳng số tiền.
