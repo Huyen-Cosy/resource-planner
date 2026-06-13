@@ -6,9 +6,10 @@
 Xây **Resource Planner** — planning tool quản lý nguồn lực đa dự án cho công ty làm dịch vụ data. Nhiều PM nhập kế hoạch dự án (phase, nhu cầu nhân sự theo role×tháng), tool tổng hợp thành bức tranh nguồn lực toàn công ty + tài chính kế hoạch, và hỗ trợ CEO quyết định (dư địa nhận việc, what-if).
 
 ## Trạng thái hiện tại
-- **Đã xong:** mockup HTML qua 14 phiên (đặc tả hành vi đầy đủ, 8 tab), spec hoàn chỉnh, DECISIONS.md, BACKLOG.md.
-- **Bước tiếp theo:** đưa 4 tài liệu (spec, decisions, backlog, mockup) + vào repo → mở Claude Code → build theo kế hoạch phase trong spec (MVP: Phase 1-4).
-- **Chưa bắt đầu code thật.**
+- **Đã xong:** mockup HTML (đặc tả hành vi đầy đủ, 8 tab), spec, DECISIONS.md, BACKLOG.md.
+- **Quyết định mới (06/2026):** RBAC vào MVP — PM ẩn tài chính, khóa tầng RLS, user tự đăng ký + admin gán quyền (D19). Seed dùng dữ liệu thật ideaLAB.
+- **✅ Phase 1 ĐÃ DỰNG** (branch `claude/sleepy-lovelace-i8s4bo`): `db/schema.sql` + `db/views.sql` + `db/seed.sql` + `db/README.md`. Đã test trên Postgres 16: 3 file chạy sạch; RBAC verify (pm = 0 dòng tài chính, finance = đủ). **Chưa deploy lên Supabase thật** — chờ user chạy theo `db/README.md`.
+- **Bước tiếp theo:** Phase 2 — `web/index.html` nối Supabase (login + ẩn cụm tài chính cho pm + màn admin "Quản lý người dùng" + báo cáo 5 phần bê từ mockup-idealab).
 
 ## 5 điều cốt lõi không được quên (chi tiết ở DECISIONS.md)
 1. **Planning tool, KHÔNG phải tracking** — không có tiến độ/chi tiêu thực, mọi thứ là kế hoạch dự kiến.
