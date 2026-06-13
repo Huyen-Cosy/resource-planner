@@ -886,8 +886,11 @@ function shortageMap(demand){
 
 /* =================== RENDER =================== */
 function renderMatrix(demand){
+  /* thứ tự: role đang được assign vào dự án (có nhu cầu) lên trên; role quản lý + role chưa có PIC (0 người) xuống dưới */
+  const rkey=r=>{ if(demand[r]&&demand[r].some(d=>d>0))return 0; if(MGMT_ROLES.includes(r)||empsByRole(r).length===0)return 2; return 1; };
+  const ord=[...ROLES].sort((a,b)=>rkey(a)-rkey(b)||ROLES.indexOf(a)-ROLES.indexOf(b));
   let h='<thead><tr><th>Role</th>'+months.map((m,i)=>`<th class="m">${mLabel(i)}</th>`).join('')+'</tr></thead><tbody>';
-  for(const r of ROLES){
+  for(const r of ord){
     h+=`<tr><td class="role"><b>${r}</b><small>${roleName[r]} · ${roleCapacity(r)} người</small></td>`;
     demand[r].forEach(d=>{
       const cap=roleCapacity(r),gap=cap-d;let cls='ok';
