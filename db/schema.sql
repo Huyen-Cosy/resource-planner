@@ -205,7 +205,8 @@ revoke all on all tables in schema public from anon, authenticated;
 
 -- catalog KHÔNG nhạy cảm (ref_roles, ref_project_types, ref_norms): cho đọc trực tiếp
 grant select on ref_roles, ref_project_types, ref_norms to authenticated;
--- ghi catalog: chỉ finance/admin
+-- ghi catalog: chỉ finance/admin — RLS gate qua is_finance(); GRANT phải có để policy có hiệu lực
+grant insert, update, delete on ref_roles, ref_project_types, ref_norms to authenticated;
 create policy ref_roles_write   on ref_roles        for all to authenticated using (is_finance()) with check (is_finance());
 create policy ref_types_write   on ref_project_types for all to authenticated using (is_finance()) with check (is_finance());
 create policy ref_norms_write   on ref_norms        for all to authenticated using (is_finance()) with check (is_finance());
