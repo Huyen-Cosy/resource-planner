@@ -264,11 +264,21 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--moss);outline-of
     <button class="btn primary" onclick="go('t4')">+ Tạo dự án mới</button>
   </div>
   <div class="card">
+    <h2>Nhập nhanh nhiều dự án (CSV) <span class="tag">cho nhiều PM</span></h2>
+    <div class="btnrow" style="gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px">
+      <button class="btn" onclick="downloadCsvTemplate()">⬇ Tải template CSV</button>
+      <label class="btn" style="cursor:pointer;margin:0">⬆ Import CSV (chọn nhiều file)
+        <input type="file" accept=".csv,text/csv" multiple style="display:none" onchange="importCSVFile(event)"></label>
+      <button class="btn" onclick="resetData()" title="Xóa dữ liệu đã lưu, về mẫu">↺ Reset về mẫu</button>
+      <span class="sub">PM điền template → Excel Save As .csv → import. Dữ liệu tự lưu trong trình duyệt (sống qua reload).</span>
+    </div>
+  </div>
+  <div class="card">
     <table>
-      <thead><tr><th>Dự án</th><th>Loại</th><th>PM</th><th>Ưu tiên</th><th>Thời gian</th><th>Margin KH</th><th>Trạng thái</th></tr></thead>
+      <thead><tr><th>Dự án</th><th>Loại</th><th>PM</th><th>Ưu tiên</th><th>Thời gian</th><th>Margin KH</th><th>Trạng thái</th><th>Báo cáo</th><th>Xóa</th></tr></thead>
       <tbody id="projRows"></tbody>
     </table>
-    <p class="hint">Bấm vào dòng để mở chi tiết dự án.</p>
+    <p class="hint">Bấm dòng để mở chi tiết · cột <b>Báo cáo</b> = đưa dự án vào báo cáo tổng · nút <b>✕</b> = xóa hẳn khỏi tool.</p>
   </div>
 </section>
 
@@ -860,9 +870,11 @@ function renderProjects(){
     projects.map(p=>{
       const rev=p.revenue||0,pct=rev?Math.round(projMargin(p)/rev*100):null;
       const mg=pct===null?'—':`<span style="color:${pct<0?'var(--alert)':pct<10?'var(--idle)':'var(--moss)'}">${pct}%</span>`;
-      return `<tr class="rowlink" onclick="openProject('${p.id}')"><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.pm}</td><td class="prio">${p.prio}</td><td class="mono" style="font-size:12px">${fmt(p)}</td><td class="mono" style="font-size:12px">${mg}</td><td>${badge[p.status]}</td></tr>`;
+      return `<tr class="rowlink" onclick="openProject('${p.id}')"><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.pm}</td><td class="prio">${p.prio}</td><td class="mono" style="font-size:12px">${fmt(p)}</td><td class="mono" style="font-size:12px">${mg}</td><td>${badge[p.status]}</td>`+
+        `<td onclick="event.stopPropagation()" style="text-align:center"><input type="checkbox" ${p.inReport!==false?'checked':''} onchange="toggleReport('${p.id}',this.checked)" title="Đưa vào báo cáo tổng"></td>`+
+        `<td onclick="event.stopPropagation()" style="text-align:center"><button class="btn" style="padding:2px 9px" onclick="deleteProject('${p.id}')" title="Xóa dự án">✕</button></td></tr>`;
     }).join('')+
-    otherProjects.map(p=>`<tr style="color:var(--muted)" title="Dự án ${p.status==='draft'?'nháp':'đã đóng'} — chưa có trang chi tiết để mở"><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.pm}</td><td class="prio">${p.prio}</td><td class="mono" style="font-size:12px">${p.time}</td><td class="mono" style="font-size:12px">—</td><td>${badge[p.status]}</td></tr>`).join('');
+    otherProjects.map(p=>`<tr style="color:var(--muted)" title="Dự án ${p.status==='draft'?'nháp':'đã đóng'} — chưa có trang chi tiết để mở"><td><b>${p.name}</b></td><td>${p.type}</td><td>${p.pm}</td><td class="prio">${p.prio}</td><td class="mono" style="font-size:12px">${p.time}</td><td class="mono" style="font-size:12px">—</td><td>${badge[p.status]}</td><td></td><td></td></tr>`).join('');
 }
 
 /* ===== Tab 3 — chi tiết dự án đang chọn ===== */
@@ -914,7 +926,7 @@ function setPhase(id,sel){
   if(edge===1){p.phases[k][1]=Math.min(val,p.phases[k][2]);}else{p.phases[k][2]=Math.max(val,p.phases[k][1]);}
   renderDetail();markEdited(p);
 }
-function markEdited(p){p.lastEdit=p.pm+' · vừa sửa (chưa lưu)';setDirty(true);}
+function markEdited(p){p.lastEdit=p.pm+' · vừa sửa (chưa lưu)';setDirty(true);if(typeof saveData==='function')saveData();}
 let dirty=false;
 function setDirty(v){dirty=v;document.getElementById('dirtyFlag').style.display=v?'inline':'none';}
 function saveDetail(){
@@ -1797,7 +1809,8 @@ function saveManual(){
    không cần web app, không thư viện ngoài, chạy offline. */
 function reportCss(){return `
   *{box-sizing:border-box} body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a1a;margin:0;padding:24px;font-size:13px;line-height:1.5}
-  h1{font-size:22px;margin:0 0 4px} h2{font-size:15px;margin:22px 0 8px;border-bottom:2px solid #2b6cb0;padding-bottom:4px;color:#2b6cb0}
+  h1{font-size:22px;margin:0 0 4px} h2{font-size:16px;margin:24px 0 8px;border-bottom:2px solid #2b6cb0;padding-bottom:4px;color:#2b6cb0}
+  h3{font-size:13px;margin:12px 0 4px;color:#2d3748}
   .meta{color:#666;font-size:12px;margin-bottom:8px}
   table{border-collapse:collapse;width:100%;margin:6px 0;font-size:12px}
   th,td{border:1px solid #cbd5e0;padding:5px 8px;text-align:right} th{background:#edf2f7;text-align:center}
@@ -1812,17 +1825,26 @@ function reportCss(){return `
   .foot{margin-top:24px;font-size:11px;color:#888;border-top:1px solid #e2e8f0;padding-top:8px}
   @media print{body{padding:0} h2{page-break-after:avoid} table{page-break-inside:avoid}}
 `;}
+/* dự án đưa vào báo cáo: active (hoặc gồm draft theo ceoScope) VÀ không bị loại khỏi báo cáo (inReport!==false) */
+function reportProjects(){
+  const all=document.getElementById('ceoScope')&&document.getElementById('ceoScope').value==='all';
+  return projects.filter(p=>(all?p.status!=='closed':p.status==='active')&&p.inReport!==false);
+}
 function buildCeoReport(){
-  const list=ceoList();
+  const list=reportProjects();
+  const demand=computeDemand(list);
   let totRev=0,totCost=0,loss=0;
   list.forEach(p=>{totRev+=+p.revenue||0;totCost+=projTotalCost(p);if(projMargin(p)<0)loss++;});
   const totMargin=totRev-totCost;
-  const demand=computeDemand(projects);
   let shortCount=0;months.forEach((m,i)=>{for(const r of ROLES){if(roleCapacity(r)-demand[r][i]<0)shortCount++;}});
   const ds=new Date().toLocaleDateString('vi-VN');
-  const scope=document.getElementById('ceoScope').value==='all'?'gồm cả dự án nháp':'dự án đã cam kết (active)';
+  function loadIn(eid,i){let pct=0;for(const p of list)if(p.assign)for(const r in p.assign){const c=p.assign[r][i];if(c&&c[eid])pct+=+c[eid];}return pct;}
+
   let h=`<h1>Báo cáo Kế hoạch Nguồn lực & Tài chính</h1>`+
-    `<div class="meta">Lập ngày ${ds} · Phạm vi: ${scope} · Đơn vị tiền: triệu VND · Nguồn: Resource Planner (kế hoạch dự kiến)</div>`+
+    `<div class="meta">Lập ngày ${ds} · ${list.length} dự án trong báo cáo · Đơn vị tiền: triệu VND · Nguồn: Resource Planner (KẾ HOẠCH DỰ KIẾN)</div>`;
+
+  /* ===== 1. TỔNG QUAN CEO ===== */
+  h+=`<h2>1. Tổng quan CEO</h2>`+
     `<div class="kpi-row">`+
     `<div class="kpi"><div class="v">${list.length}</div><div class="l">dự án</div></div>`+
     `<div class="kpi"><div class="v">${fmtM(totRev)}</div><div class="l">tổng doanh thu</div></div>`+
@@ -1831,8 +1853,7 @@ function buildCeoReport(){
     `<div class="kpi"><div class="v ${loss?'bad':'good'}">${loss}</div><div class="l">dự án lỗ kế hoạch</div></div>`+
     `<div class="kpi"><div class="v ${shortCount?'bad':'good'}">${shortCount}</div><div class="l">lượt role-tháng thiếu</div></div>`+
     `</div>`;
-  /* bảng tài chính theo dự án (lỗ nhất lên đầu) */
-  h+=`<h2>Tài chính theo dự án</h2><table><thead><tr><th class="l">Dự án</th><th class="l">PM</th><th>Ưu tiên</th><th class="l">Thời gian</th><th>Doanh thu</th><th>Chi phí NS</th><th>Management</th><th>Tổng CP</th><th>Margin</th><th>%</th></tr></thead><tbody>`;
+  h+=`<h3>Tài chính theo dự án</h3><table><thead><tr><th class="l">Dự án</th><th class="l">PM</th><th>Ưu tiên</th><th class="l">Thời gian</th><th>Doanh thu</th><th>Chi phí NS</th><th>Management</th><th>Tổng CP</th><th>Margin</th><th>%</th></tr></thead><tbody>`;
   list.slice().sort((a,b)=>projMargin(a)-projMargin(b)).forEach(p=>{
     const rev=+p.revenue||0,mg=projMargin(p),pct=rev?Math.round(mg/rev*100):0;
     h+=`<tr><td class="l">${p.name}</td><td class="l">${p.pm}</td><td>${p.prio}</td><td class="l">${fmtYM(p.start)}→${fmtYM(p.end)}</td>`+
@@ -1840,22 +1861,62 @@ function buildCeoReport(){
       `<td class="${mg<0?'bad':'good'}">${fmtM(mg)}</td><td class="${pct<10?'warn':'good'}">${pct}%</td></tr>`;
   });
   h+=`</tbody></table>`;
-  /* bức tranh nguồn lực: role × tháng, chỉ role có nhu cầu */
+  const al=[];
+  list.forEach(p=>{const mg=projMargin(p);if(mg<0)al.push(`<b>${p.name.split(' — ')[0]}</b> lỗ kế hoạch ${fmtM(mg)} triệu — đàm phán lại giá/scope hoặc giảm nhân sự senior`);});
+  months.forEach((m,i)=>{for(const r of ROLES){const g=roleCapacity(r)-demand[r][i];if(g<0)al.push(`Thiếu <b>${Math.abs(Math.round(g*10)/10)} ${r}</b> vào ${mLabel(i)} — tuyển/thuê ngoài hoặc giãn lịch`);}});
+  h+=`<h3>Cảnh báo kế hoạch</h3>`+(al.length?`<ul>`+al.slice(0,12).map(a=>`<li>${a}</li>`).join('')+`</ul>`:`<div class="note good">✓ Không có cảnh báo: không dự án lỗ, không thiếu người trong khung kế hoạch.</div>`);
+
+  /* ===== 2. BỨC TRANH CÔNG TY ===== */
   const activeRoles=ROLES.filter(r=>months.some((m,i)=>demand[r][i]>0));
-  h+=`<h2>Bức tranh nguồn lực (nhu cầu / năng lực theo role × tháng)</h2><table><thead><tr><th class="l">Role</th><th>Năng lực</th>`;
+  h+=`<h2>2. Bức tranh nguồn lực toàn công ty</h2><table><thead><tr><th class="l">Role</th><th>Năng lực</th>`;
   months.forEach((m,i)=>h+=`<th>${mLabel(i)}</th>`);
   h+=`</tr></thead><tbody>`;
-  activeRoles.forEach(r=>{
+  (activeRoles.length?activeRoles:ROLES).forEach(r=>{
     h+=`<tr><td class="l">${roleName[r]||r}</td><td>${roleCapacity(r)}</td>`;
     months.forEach((m,i)=>{const dem=demand[r][i],gap=roleCapacity(r)-dem;const cls=gap<0?'short':(gap===0&&dem>0?'full':'');h+=`<td class="${cls}">${dem?dem:'·'}</td>`;});
     h+=`</tr>`;
   });
   h+=`</tbody></table><div class="note">Tô đỏ = thiếu người (nhu cầu &gt; năng lực) · vàng = kín (nhu cầu = năng lực).</div>`;
-  /* cảnh báo */
-  const al=[];
-  list.forEach(p=>{const mg=projMargin(p);if(mg<0)al.push(`<b>${p.name.split(' — ')[0]}</b> lỗ kế hoạch ${fmtM(mg)} triệu — đàm phán lại giá/scope hoặc giảm nhân sự senior`);});
-  months.forEach((m,i)=>{for(const r of ROLES){const g=roleCapacity(r)-demand[r][i];if(g<0)al.push(`Thiếu <b>${Math.abs(Math.round(g*10)/10)} ${r}</b> vào ${mLabel(i)} — tuyển/thuê ngoài hoặc giãn lịch`);}});
-  h+=`<h2>Cảnh báo kế hoạch</h2>`+(al.length?`<ul>`+al.slice(0,12).map(a=>`<li>${a}</li>`).join('')+`</ul>`:`<div class="note good">✓ Không có cảnh báo: không dự án lỗ, không thiếu người trong khung kế hoạch.</div>`);
+
+  /* ===== 3. CHI TIẾT TỪNG DỰ ÁN ===== */
+  h+=`<h2>3. Chi tiết từng dự án</h2>`;
+  if(!list.length)h+=`<div class="note">Không có dự án nào trong báo cáo.</div>`;
+  list.forEach(p=>{
+    const s=mDiff(ANCHOR,p.start),e=Math.min(mDiff(ANCHOR,p.end),months.length-1);
+    const rev=+p.revenue||0,mg=projMargin(p),pct=rev?Math.round(mg/rev*100):0;
+    h+=`<h3>▸ ${p.name}</h3>`+
+      `<div class="note">PM ${p.pm} · ${p.type} · ${p.prio} · ${fmtYM(p.start)}→${fmtYM(p.end)} · DT ${fmtM(rev)} − tổng CP ${fmtM(projTotalCost(p))} (NS ${fmtM(projCost(p))} + mgmt ${fmtM(projMgmtCost(p))}) = margin <b class="${mg<0?'bad':'good'}">${fmtM(mg)} (${pct}%)</b></div>`;
+    if(p.phases&&p.phases.length)h+=`<div class="note">Phase: ${p.phases.map(ph=>ph[0]+' ('+mLabel(ph[1])+'→'+mLabel(ph[2])+')').join(' · ')}</div>`;
+    h+=`<table><thead><tr><th class="l">Phân bổ (người)</th>`;for(let i=s;i<=e;i++)h+=`<th>${mLabel(i)}</th>`;h+=`</tr></thead><tbody>`;
+    projRoles(p).forEach(r=>{h+=`<tr><td class="l">${roleName[r]||r}</td>`;for(let i=s;i<=e;i++){const v=av(p,r,i);h+=`<td>${v?v:'·'}</td>`;}h+=`</tr>`;});
+    h+=`<tr><td class="l"><b>Chi phí NS (triệu)</b></td>`;for(let i=s;i<=e;i++){const c=projCostMonth(p,i);h+=`<td>${c?fmtM(c):'·'}</td>`;}h+=`</tr>`;
+    h+=`</tbody></table>`;
+  });
+
+  /* ===== 4. NGUỒN LỰC CÁ NHÂN ===== */
+  h+=`<h2>4. Nguồn lực cá nhân (tải %/tháng)</h2>`;
+  const people=employees.filter(em=>months.some((m,i)=>loadIn(em.id,i)>0));
+  if(!people.length)h+=`<div class="note">Chưa gán người cụ thể vào dự án nào trong báo cáo.</div>`;
+  else{
+    h+=`<table><thead><tr><th class="l">Nhân sự</th>`;months.forEach((m,i)=>h+=`<th>${mLabel(i)}</th>`);h+=`</tr></thead><tbody>`;
+    people.forEach(em=>{h+=`<tr><td class="l">${em.name}</td>`;months.forEach((m,i)=>{const l=loadIn(em.id,i);const cls=l>100?'short':(l===100?'full':'');h+=`<td class="${cls}">${l?l+'%':'·'}</td>`;});h+=`</tr>`;});
+    h+=`</tbody></table><div class="note">Đỏ = quá tải (&gt;100%, làm nhiều dự án cùng lúc) · vàng = full (100%).</div>`;
+  }
+
+  /* ===== 5. THÔNG TIN CẤU HÌNH ===== */
+  h+=`<h2>5. Thông tin cấu hình</h2>`;
+  h+=`<h3>Năng lực theo role</h3><table><thead><tr><th class="l">Role</th><th>Khai báo</th><th>Thực có</th></tr></thead><tbody>`;
+  ROLES.forEach(r=>{const real=empsByRole(r).length;if(!real&&!(declaredCap[r]))return;h+=`<tr><td class="l">${roleName[r]||r}</td><td>${declaredCap[r]||0}</td><td>${real}</td></tr>`;});
+  h+=`</tbody></table>`;
+  h+=`<h3>Nhân sự & rate cá nhân</h3><table><thead><tr><th class="l">Tên</th><th class="l">Role</th><th>Level</th><th>Loại rate</th><th>Rate</th><th>Chi phí/tháng @100%</th></tr></thead><tbody>`;
+  employees.forEach(em=>{h+=`<tr><td class="l">${em.name}</td><td class="l">${roleName[em.role]||em.role}</td><td>${em.level||''}</td><td>${em.rateType==='hourly'?'giờ (ngh/h)':'tháng (tr)'}</td><td>${em.rate}</td><td>${fmtM(empMonthlyCost(em))}</td></tr>`;});
+  h+=`</tbody></table>`;
+  if(typeof models!=='undefined'&&models.length){
+    h+=`<h3>Cấu hình AI model</h3><table><thead><tr><th class="l">Model</th><th class="l">Provider</th><th>Trạng thái</th></tr></thead><tbody>`;
+    models.forEach((mo,i)=>h+=`<tr><td class="l">${mo.label}${(typeof activeModel!=='undefined'&&i===activeModel)?' · đang dùng':''}</td><td class="l">${mo.provider}</td><td>${mo.status}</td></tr>`);
+    h+=`</tbody></table>`;
+  }
+
   h+=`<div class="foot">Báo cáo là <b>KẾ HOẠCH DỰ KIẾN</b> tính từ phân bổ nguồn lực + rate cá nhân + doanh thu nhập tay — KHÔNG phải số thực tế/tiến độ thực. Sinh tự động từ Resource Planner.</div>`;
   return h;
 }
@@ -1876,8 +1937,76 @@ function exportReportDoc(){
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
+/* =================== QUẢN LÝ DỮ LIỆU: import CSV nhiều file · localStorage · xóa/loại dự án ===================
+   Đây là CẦU TẠM để dùng mockup như sản phẩm trước khi có Supabase (D9). Vanilla, offline. */
+const LS_KEY='rp_idealab_v1';let impSeq=0;
+function saveData(){try{localStorage.setItem(LS_KEY,JSON.stringify({projects,employees,ROLES,roleName,declaredCap,v:1}));}catch(e){}}
+function loadData(){try{const raw=localStorage.getItem(LS_KEY);if(!raw)return false;const d=JSON.parse(raw);
+  if(d.projects)projects=d.projects;if(d.employees)employees=d.employees;if(d.ROLES)ROLES=d.ROLES;
+  if(d.roleName)Object.assign(roleName,d.roleName);if(d.declaredCap)Object.assign(declaredCap,d.declaredCap);return true;
+}catch(e){return false;}}
+function resetData(){if(!confirm('Xóa toàn bộ dữ liệu đã nhập/sửa, quay về dữ liệu mẫu? Không hoàn tác.'))return;localStorage.removeItem(LS_KEY);location.reload();}
+function deleteProject(id){const p=projects.find(x=>x.id===id);if(!p)return;
+  if(!confirm('Xóa hẳn dự án "'+p.name+'" khỏi tool?'))return;
+  projects=projects.filter(x=>x.id!==id);
+  if(!projects.length)cur=null;else if(cur===id)cur=projects[0].id;
+  saveData();buildMonths();refreshCompany();renderProjects();if(cur)renderDetail();renderCEO();toast('Đã xóa dự án');}
+function toggleReport(id,on){const p=projects.find(x=>x.id===id);if(p){p.inReport=on;saveData();renderProjects();renderCEO();}}
+/* ---- CSV import (Excel Save As .csv) ---- */
+function csvTemplate(){
+  return ['Du an,Loai,PM,Uu tien,Bat dau (YYYY-MM),Ket thuc (YYYY-MM),Doanh thu,Chi phi khac,Management %,Role,T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11,T12',
+    'Du an mau X,BI_DASHBOARD,Ten PM,P1,2026-03,2026-06,500,0,10,DE,1,1,0.5,0,,,,,,,,',
+    'Du an mau X,BI_DASHBOARD,Ten PM,P1,2026-03,2026-06,500,0,10,DA,0,1,1,1,,,,,,,,'].join('\n');
+}
+function downloadCsvTemplate(){const blob=new Blob(['﻿'+csvTemplate()],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='template-du-an.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+function parseCSVLine(line){const out=[];let cur='',q=false;
+  for(let i=0;i<line.length;i++){const c=line[i];
+    if(q){if(c==='"'){if(line[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else{if(c==='"')q=true;else if(c===','){out.push(cur);cur='';}else cur+=c;}}
+  out.push(cur);return out.map(s=>s.trim());}
+function importProjectsCSV(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.replace(/[\s,]/g,''));
+  if(lines.length<2)return {added:0,errors:['File rỗng hoặc thiếu dữ liệu']};
+  const header=parseCSVLine(lines[0].replace(/^﻿/,''));const norm=s=>s.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const idx={};header.forEach((hn,i)=>idx[norm(hn)]=i);
+  const col=(row,keys)=>{for(const k of keys){if(idx[k]!=null&&row[idx[k]]!=null)return row[idx[k]];}return '';};
+  const groups={},errors=[];
+  for(let li=1;li<lines.length;li++){const row=parseCSVLine(lines[li]);if(row.every(c=>!c))continue;
+    const name=col(row,['duan','project','tenduan']);
+    if(!name){errors.push('Dòng '+(li+1)+': thiếu tên dự án');continue;}
+    (groups[name]=groups[name]||[]).push(row);}
+  let added=0;const ym=/^\d{4}-\d{2}$/;
+  for(const name in groups){const rows=groups[name],meta=rows[0];
+    const start=col(meta,['batdauyyyymm','batdau','start']),end=col(meta,['ketthucyyyymm','ketthuc','end']);
+    if(!ym.test(start)||!ym.test(end)){errors.push('"'+name+'": ngày phải dạng YYYY-MM');continue;}
+    if(mDiff(start,end)<0){errors.push('"'+name+'": kết thúc trước bắt đầu');continue;}
+    if(mDiff(ANCHOR,start)<0){errors.push('"'+name+'": bắt đầu trước mốc '+ANCHOR+' (không hỗ trợ)');continue;}
+    const s=mDiff(ANCHOR,start),e=mDiff(ANCHOR,end),alloc={},rolesIn=[];let roleErr=false;
+    rows.forEach(r=>{const role=(col(r,['role'])||'').toUpperCase();if(!role)return;
+      if(!ROLES.includes(role)){errors.push('"'+name+'": role "'+role+'" không có trong danh mục');roleErr=true;return;}
+      if(!alloc[role]){alloc[role]=Array(e+1).fill(0);rolesIn.push(role);}
+      for(let k=0;k<=e-s;k++){const v=parseFloat(String(col(r,['t'+(k+1)])||'').replace(',','.'));if(!isNaN(v)&&v>0)alloc[role][s+k]=v;}});
+    if(!rolesIn.length){if(!roleErr)errors.push('"'+name+'": không có role hợp lệ');continue;}
+    projects.push({id:'IMP'+(++impSeq)+Date.now().toString().slice(-4),name,type:col(meta,['loai','type'])||'OTHER',
+      pm:col(meta,['pm'])||'?',prio:(col(meta,['uutien','prio'])||'P3').slice(0,2),start,end,status:'active',inReport:true,
+      revenue:+(col(meta,['doanhthu','revenue'])||0)||0,otherCost:+(col(meta,['chiphikhac','othercost'])||0)||0,
+      mgmtPct:+(col(meta,['management','mgmtpct'])||0)||0,lastEdit:'Import CSV · '+new Date().toLocaleDateString('vi-VN'),
+      roles:rolesIn,phases:[['(import)',s,e]],alloc,assign:{}});
+    added++;}
+  return {added,errors};}
+function importCSVFile(ev){const fs=ev.target.files;if(!fs||!fs.length)return;let done=0,totAdd=0,allErr=[];
+  Array.from(fs).forEach(f=>{const rd=new FileReader();rd.onload=()=>{const res=importProjectsCSV(String(rd.result));
+    totAdd+=res.added;allErr=allErr.concat(res.errors.map(e=>'['+f.name+'] '+e));done++;
+    if(done===fs.length){saveData();buildMonths();refreshCompany();renderProjects();renderCEO();
+      toast('Đã nhập '+totAdd+' dự án'+(allErr.length?' · '+allErr.length+' cảnh báo':''),allErr.length?'warn':undefined);
+      if(allErr.length)alert('Kết quả import:\n✓ Thêm '+totAdd+' dự án\n\n⚠ Vấn đề:\n- '+allErr.join('\n- '));}
+  };rd.readAsText(f,'utf-8');});ev.target.value='';}
+
 /* khởi tạo */
-buildMonths();refreshCompany();renderProjects();renderDetail();selectClose('TY');renderRoles();renderCap();renderEmpCrud();renderModels();renderEmp('e1');renderManual();renderCEO();
+loadData();
+buildMonths();refreshCompany();renderProjects();renderDetail();selectClose(projects[0]?projects[0].id:'TY');renderRoles();renderCap();renderEmpCrud();renderModels();renderEmp(employees[0]?employees[0].id:'e1');renderManual();renderCEO();
 </script>
 </body>
 </html>
