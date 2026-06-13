@@ -262,14 +262,12 @@ body.role-pm .fin-only{display:none!important}
     </div>
     <div class="card">
       <h2>Dư địa nhận thêm việc <span class="tag" title="Người-tháng = 1 người làm full-time 1 tháng. VD 3.5 người-tháng = chứa thêm được khối việc bằng 3.5 tháng-công của 1 người.">tổng người-tháng còn rảnh theo role ⓘ</span></h2>
-      <div style="margin-bottom:10px;font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap">Khoảng:
-        <select id="slackRange" style="width:auto;padding:4px 8px" onchange="renderCEO()">
-          <option value="3">3 tháng đầu khung</option>
-          <option value="6" selected>6 tháng đầu khung</option>
-          <option value="12">12 tháng đầu khung</option>
-          <option value="all">Toàn bộ khung</option>
-        </select>
+      <div style="margin-bottom:6px;font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap" title="Chọn đúng khoảng tháng bạn định nhận việc — VD cân nhắc 1 dự án chạy 6/2026→10/2026 thì đặt Từ 2026-06, Đến 2026-10. Dư địa = tổng năng lực còn trống trong khoảng đó.">Đo dư địa trong khoảng:
+        Từ <input type="month" id="slackFrom" min="2026-01" max="2031-12" style="width:auto;padding:4px 8px" onchange="renderCEO()">
+        đến <input type="month" id="slackTo" min="2026-01" max="2031-12" style="width:auto;padding:4px 8px" onchange="renderCEO()">
+        <button class="btn sm" onclick="resetSlackRange()" title="Đặt lại = toàn bộ khung kế hoạch">↺ Toàn khung</button>
       </div>
+      <div id="slackRangeNote" style="margin-bottom:10px;font-size:12px;color:var(--muted)"></div>
       <div id="ceoSlack"></div>
     </div>
   </div>
@@ -1403,18 +1401,28 @@ function renderCEO(){
   al.sort((a,b)=>b.sev-a.sev);
   document.getElementById('ceoAlerts').innerHTML=al.length?al.slice(0,8).map(a=>`<div class="conflict"><span class="when" style="color:var(--alert)">⚠</span><span class="why">${a.txt}</span></div>`).join(''):'<div class="empty">✓ Kế hoạch không có cảnh báo nào.</div>';
   /* dư địa nhận thêm việc: GỘP 1 dòng/role trong khoảng đã chọn */
-  const rangeSel=document.getElementById('slackRange'),rk=rangeSel?rangeSel.value:'6';
-  const horizon=rk==='all'?months.length:Math.min(+rk,months.length);
-  /* CEO-4: chỉ tính dư địa TRONG khung còn dự án; tháng sau khi mọi dự án kết thúc là rảnh hiển nhiên → tách thành ghi chú, không cộng vào "người-tháng rảnh" */
+  /* Khoảng đo dư địa do người dùng chọn (Từ→Đến tháng); mặc định = toàn khung kế hoạch */
   let lastActive=-1;projects.forEach(p=>{if(p.status==='active'){const e=mDiff(ANCHOR,p.end);if(e>lastActive)lastActive=e;}});
-  const planHorizon=Math.max(0,Math.min(horizon,lastActive+1));
+  const sfEl=document.getElementById('slackFrom'),stEl=document.getElementById('slackTo');
+  const defTo=Math.max(0,lastActive);
+  if(sfEl&&!sfEl.value)sfEl.value=mAdd(ANCHOR,0);
+  if(stEl&&!stEl.value)stEl.value=mAdd(ANCHOR,defTo);
+  let fromIdx=sfEl?mDiff(ANCHOR,sfEl.value):0, toIdx=stEl?mDiff(ANCHOR,stEl.value):defTo;
+  if(isNaN(fromIdx)||fromIdx<0)fromIdx=0;
+  if(isNaN(toIdx))toIdx=defTo;
+  if(toIdx<fromIdx)toIdx=fromIdx;
+  if(toIdx>defTo+60)toIdx=defTo+60;                 /* chặn chọn quá xa (>5 năm sau dự án cuối) */
+  const rangeLen=toIdx-fromIdx+1;
+  const noteEl=document.getElementById('slackRangeNote');
+  if(noteEl)noteEl.innerHTML=`Đang đo <b>${labAbs(fromIdx)} → ${labAbs(toIdx)}</b> (${rangeLen} tháng). ${toIdx>lastActive&&lastActive>=0?`Phần từ ${labAbs(lastActive+1)} là sau khi mọi dự án hiện tại kết thúc → năng lực trống gần như toàn bộ.`:''}`;
   let sl='';
   for(const r of ROLES){
     const realCap=empsByRole(r).length;   /* số người THẬT của role (không tính declaredCap) */
     let freeSum=0,shortMonths=[];
-    for(let i=0;i<planHorizon;i++){
-      const gap=roleCapacity(r)-demand[r][i];
-      if(gap>0)freeSum+=gap; else if(gap<0)shortMonths.push(mLabel(i));
+    for(let i=fromIdx;i<=toIdx;i++){
+      const dem=(demand[r]&&demand[r][i]!=null)?demand[r][i]:0;   /* ngoài khung dự án → nhu cầu 0 */
+      const gap=roleCapacity(r)-dem;
+      if(gap>0)freeSum+=gap; else if(gap<0)shortMonths.push(labAbs(i));
     }
     if(freeSum<=0&&!shortMonths.length)continue;
     const freeRound=Math.round(freeSum*10)/10;
@@ -1422,15 +1430,18 @@ function renderCEO(){
     if(MGMT_ROLES.includes(r)){verdict=`vai trò quản lý — chi phí tính qua <b>management%</b>, không giao việc dự án trực tiếp${freeRound>0?` (danh nghĩa còn ~${freeRound} người-tháng)`:''}`;col='var(--muted)';}
     else if(realCap===0){verdict=`năng lực ${declaredCap[r]||0} người là KHAI BÁO — chưa có ai thật trong đội. Cần tuyển trước khi nhận việc cần ${r}`;col='var(--idle)';}
     else if(shortMonths.length){verdict=`còn ~${freeRound} người-tháng rảnh, nhưng ĐÃ thiếu ở ${shortMonths.join(', ')} — tuyển trước khi nhận thêm`;col='var(--idle)';}
-    else if(freeRound>=planHorizon*0.5){verdict=`còn ~${freeRound} người-tháng rảnh — thoải mái nhận thêm việc`;col='var(--moss)';}
+    else if(freeRound>=rangeLen*0.5){verdict=`còn ~${freeRound} người-tháng rảnh — thoải mái nhận thêm việc`;col='var(--moss)';}
     else{verdict=`còn ~${freeRound} người-tháng rảnh — nhận thêm có chừng mực`;col='var(--moss)';}
     sl+=`<div class="conflict"><span class="when" style="min-width:80px;color:${col}">${r}</span><span class="why">${verdict}</span></div>`;
   }
-  /* CEO-4: ghi chú khoảng trống sau khi mọi dự án kết thúc (toàn đội rảnh — không liệt từng role để khỏi thổi phồng) */
-  let tail='';
-  if(lastActive>=0&&horizon>lastActive+1)tail=`<div class="conflict"><span class="when" style="min-width:80px;color:var(--moss)">＋</span><span class="why">Từ <b>${mLabel(lastActive+1)}</b> trở đi chưa có dự án nào — toàn đội rảnh, nhận thêm thoải mái.</span></div>`;
-  document.getElementById('ceoSlack').innerHTML=(sl+tail)||'<div class="empty">Mọi role đều kín trong khoảng này — cân nhắc tuyển trước khi nhận thêm việc.</div>';
+  document.getElementById('ceoSlack').innerHTML=sl||'<div class="empty">Mọi role đều kín trong khoảng này — cân nhắc tuyển trước khi nhận thêm việc.</div>';
   renderWfRoles();
+}
+function resetSlackRange(){
+  let lastActive=-1;projects.forEach(p=>{if(p.status==='active'){const e=mDiff(ANCHOR,p.end);if(e>lastActive)lastActive=e;}});
+  const sf=document.getElementById('slackFrom'),st=document.getElementById('slackTo');
+  if(sf)sf.value=mAdd(ANCHOR,0); if(st)st.value=mAdd(ANCHOR,Math.max(0,lastActive));
+  renderCEO();
 }
 function renderWfRoles(){
   const ws=document.getElementById('wfStart');                 /* min theo ANCHOR động, không hardcode */
