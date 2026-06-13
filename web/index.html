@@ -654,6 +654,9 @@ let declaredCap={DE:4,DS:3,DA:4,PM:3,PO:2,DATA_LEAD:1,ARCH:1,LARK:1,FIN:1,DESIGN
 /* === RATE THEO CÁ NHÂN === mỗi người có level + loại rate + giá trị. Dữ liệu nhạy cảm. */
 const LEVELS=['Intern','Junior','Middle','Senior','Lead'];
 const HOURS_PER_MONTH=160; /* quy đổi hourly → monthly để tính chi phí */
+/* Role quản lý (PO/Tech Lead/Data Lead): chi phí tính qua management% (overhead), KHÔNG allocate
+   giao việc dự án trực tiếp (D5). Dùng để gắn nhãn ở bảng "Dư địa nhận thêm việc". */
+const MGMT_ROLES=['PO','ARCH','DATA_LEAD'];
 /* rate gợi ý mặc định theo level (triệu/người-tháng) — dùng khi tạo nhanh hoặc chưa gán người */
 let levelRate={Intern:12,Junior:28,Middle:45,Senior:70,Lead:95};
 /* chi phí 1 người trong 1 tháng nếu làm 100% (triệu) */
@@ -1362,7 +1365,8 @@ function renderCEO(){
     if(freeSum<=0&&!shortMonths.length)continue;
     const freeRound=Math.round(freeSum*10)/10;
     let verdict,col;
-    if(realCap===0){verdict=`năng lực ${declaredCap[r]||0} người là KHAI BÁO — chưa có ai thật trong đội. Cần tuyển trước khi nhận việc cần ${r}`;col='var(--idle)';}
+    if(MGMT_ROLES.includes(r)){verdict=`vai trò quản lý — chi phí tính qua <b>management%</b>, không giao việc dự án trực tiếp${freeRound>0?` (danh nghĩa còn ~${freeRound} người-tháng)`:''}`;col='var(--muted)';}
+    else if(realCap===0){verdict=`năng lực ${declaredCap[r]||0} người là KHAI BÁO — chưa có ai thật trong đội. Cần tuyển trước khi nhận việc cần ${r}`;col='var(--idle)';}
     else if(shortMonths.length){verdict=`còn ~${freeRound} người-tháng rảnh, nhưng ĐÃ thiếu ở ${shortMonths.join(', ')} — tuyển trước khi nhận thêm`;col='var(--idle)';}
     else if(freeRound>=planHorizon*0.5){verdict=`còn ~${freeRound} người-tháng rảnh — thoải mái nhận thêm việc`;col='var(--moss)';}
     else{verdict=`còn ~${freeRound} người-tháng rảnh — nhận thêm có chừng mực`;col='var(--moss)';}
