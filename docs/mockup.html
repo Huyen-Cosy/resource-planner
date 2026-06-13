@@ -1152,11 +1152,14 @@ function renderCEO(){
   /* dư địa nhận thêm việc: GỘP 1 dòng/role trong khoảng đã chọn */
   const rangeSel=document.getElementById('slackRange'),rk=rangeSel?rangeSel.value:'6';
   const horizon=rk==='all'?months.length:Math.min(+rk,months.length);
+  /* CEO-4: chỉ tính dư địa TRONG khung còn dự án; tháng sau khi mọi dự án kết thúc là rảnh hiển nhiên → tách thành ghi chú, không cộng vào "người-tháng rảnh" */
+  let lastActive=-1;projects.forEach(p=>{if(p.status==='active'){const e=mDiff(ANCHOR,p.end);if(e>lastActive)lastActive=e;}});
+  const planHorizon=Math.max(0,Math.min(horizon,lastActive+1));
   let sl='';
   for(const r of ROLES){
     const realCap=empsByRole(r).length;   /* số người THẬT của role (không tính declaredCap) */
     let freeSum=0,shortMonths=[];
-    for(let i=0;i<horizon;i++){
+    for(let i=0;i<planHorizon;i++){
       const gap=roleCapacity(r)-demand[r][i];
       if(gap>0)freeSum+=gap; else if(gap<0)shortMonths.push(mLabel(i));
     }
@@ -1165,11 +1168,14 @@ function renderCEO(){
     let verdict,col;
     if(realCap===0){verdict=`năng lực ${declaredCap[r]||0} người là KHAI BÁO — chưa có ai thật trong đội. Cần tuyển trước khi nhận việc cần ${r}`;col='var(--idle)';}
     else if(shortMonths.length){verdict=`còn ~${freeRound} người-tháng rảnh, nhưng ĐÃ thiếu ở ${shortMonths.join(', ')} — tuyển trước khi nhận thêm`;col='var(--idle)';}
-    else if(freeRound>=horizon*0.5){verdict=`còn ~${freeRound} người-tháng rảnh — thoải mái nhận thêm việc`;col='var(--moss)';}
+    else if(freeRound>=planHorizon*0.5){verdict=`còn ~${freeRound} người-tháng rảnh — thoải mái nhận thêm việc`;col='var(--moss)';}
     else{verdict=`còn ~${freeRound} người-tháng rảnh — nhận thêm có chừng mực`;col='var(--moss)';}
     sl+=`<div class="conflict"><span class="when" style="min-width:80px;color:${col}">${r}</span><span class="why">${verdict}</span></div>`;
   }
-  document.getElementById('ceoSlack').innerHTML=sl||'<div class="empty">Mọi role đều kín trong khoảng này — cân nhắc tuyển trước khi nhận thêm việc.</div>';
+  /* CEO-4: ghi chú khoảng trống sau khi mọi dự án kết thúc (toàn đội rảnh — không liệt từng role để khỏi thổi phồng) */
+  let tail='';
+  if(lastActive>=0&&horizon>lastActive+1)tail=`<div class="conflict"><span class="when" style="min-width:80px;color:var(--moss)">＋</span><span class="why">Từ <b>${mLabel(lastActive+1)}</b> trở đi chưa có dự án nào — toàn đội rảnh, nhận thêm thoải mái.</span></div>`;
+  document.getElementById('ceoSlack').innerHTML=(sl+tail)||'<div class="empty">Mọi role đều kín trong khoảng này — cân nhắc tuyển trước khi nhận thêm việc.</div>';
   renderWfRoles();
 }
 function renderWfRoles(){
