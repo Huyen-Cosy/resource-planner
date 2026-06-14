@@ -9,6 +9,19 @@
 4. `docs/BACKLOG.md` — việc CỐ Ý hoãn. **Không tự làm sớm** các mục này.
 5. `docs/mockup.html` — đặc tả hành vi sống (bản v17). Mở bằng browser để xem tương tác thật.
 
+## Bản đồ tài liệu — đọc đúng doc theo loại việc (Lớp 1: TẬN DỤNG)
+| Khi cần | Đọc |
+|---|---|
+| Bắt nhịp trạng thái (đầu mỗi session) | `docs/PROJECT-CONTEXT.md` |
+| Vì sao thiết kế thế (chống đi-lùi) | `docs/DECISIONS.md` |
+| Yêu cầu nghiệp vụ / phạm vi / stakeholder | `docs/BRD.md` |
+| Chức năng chi tiết (FR/NFR) + ma trận RBAC | `docs/SRS.md` |
+| Hành vi theo người dùng (epic/story/acceptance) | `docs/user-stories.md` |
+| Schema / view / RLS / công thức cost–margin | `docs/DATABASE.md` |
+| Đặc tả gốc 8 tab + tiêu chí nghiệm thu | `docs/SPEC.md` |
+| Việc CỐ Ý hoãn (đừng làm sớm) | `docs/BACKLOG.md` |
+| Hành vi tương tác sống | `docs/mockup.html` (v17) |
+
 ## Sản phẩm là gì (1 câu)
 Planning tool quản lý nguồn lực đa dự án cho công ty dịch vụ data: nhiều PM nhập kế hoạch (phase + nhu cầu role×tháng), tool tổng hợp thành bức tranh nguồn lực toàn công ty + tài chính kế hoạch, hỗ trợ CEO quyết định.
 
@@ -61,6 +74,17 @@ Mockup v17 (bản gần nhất) đã thêm 3 ràng buộc ở luồng **t4 — T
   - **Lưu ý ephemeral:** container của Claude Code web là tạm thời — file `.env` KHÔNG tồn tại ở session mới. Muốn token sống qua nhiều session: thêm vào **Environment Variables của Claude Code web environment** (hoặc GitHub Secrets cho workflow), không phải file trong repo.
   - Anon key của Supabase được phép nhúng trong `web/index.html` (theo thiết kế Supabase + RLS — xem SPEC §7).
 - **Khi đổi hướng thiết kế:** cập nhật `docs/DECISIONS.md` (và SPEC nếu cần) để Claude Chat và Claude Code không lệch. Đây là điểm đồng bộ chung giữa hai nơi.
+- **Definition of Done — luật chống lệch tài liệu (Lớp 2):** mỗi thay đổi PHẢI cập nhật doc liên quan **trong CÙNG commit**. Ánh xạ:
+
+  | Đổi gì trong code/DB | Phải cập nhật doc |
+  |---|---|
+  | `db/schema.sql` / `db/views.sql` | `DATABASE.md` (+ `SPEC.md` nếu đụng đặc tả) |
+  | Tính năng / hành vi UI (mới hoặc sửa) | `SRS.md` (FR) + `user-stories.md` + `PROJECT-CONTEXT.md` (status) |
+  | Đổi hướng thiết kế | `DECISIONS.md` |
+  | Phạm vi / yêu cầu nghiệp vụ | `BRD.md` |
+  | Hoãn / bỏ việc | `BACKLOG.md` |
+
+  **Cuối mỗi session (Lớp 3):** rà `PROJECT-CONTEXT.md` (status) + doc bị ảnh hưởng → commit chung. Nguyên tắc: *code và doc đi cùng nhau, không để doc lệch quá 1 commit.*
 - **Sửa thiết kế & mockup:** Claude Code ĐƯỢC PHÉP đổi thiết kế, sửa mockup, thử UX trực tiếp tại đây — không cần chuyển qua Claude Chat. Điều kiện duy nhất: khi đổi hướng thiết kế, cập nhật `docs/DECISIONS.md` (và SPEC nếu cần) ngay trong cùng đợt sửa để mọi session sau không lệch.
 
 ## Bắt đầu từ đâu
