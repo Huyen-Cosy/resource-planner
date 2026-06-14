@@ -119,7 +119,7 @@ erDiagram
 
 | Bảng | Cột chính | Vai trò |
 |---|---|---|
-| `ref_roles` | code (PK), name, declared_capacity, sort_order | Danh mục role; `declared_capacity` = năng lực **khai báo** (fallback khi chưa có người thật) |
+| `ref_roles` | code (PK), name, declared_capacity, sort_order, **is_management**, **is_primary** | Danh mục role; `declared_capacity` = năng lực **khai báo** (fallback khi chưa có người thật). `is_management`=role tính qua management% (overhead, không allocate trực tiếp — D5); `is_primary`=role chính của dự án data (ưu tiên hiển thị + default what-if/lưu nhanh). **Web nạp 2 cờ này thay cho hardcode `MGMT_ROLES`/`PRIMARY_ROLES` — NFR-09** |
 | `ref_level_rates` | level (PK), 🔒 monthly_rate | Rate gợi ý theo level (nhạy cảm) |
 | `ref_project_types` | code (PK), name | Loại dự án (FK của projects) |
 | `ref_norms` | key (PK), value, description | Hệ số chuẩn cho ước lượng (vòng học) |

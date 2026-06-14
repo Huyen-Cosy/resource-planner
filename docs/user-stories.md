@@ -183,8 +183,8 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 | NFR-06 | **Tương thích** | Vanilla HTML/JS, chạy mọi browser hiện đại; Supabase JS qua CDN | ✅ |
 | NFR-07 | **Responsive** | Đọc-trước trên mobile (ghim cột đầu, KPI/card gọn, bảng cuộn ngang) | ◻️ Vòng 1 (cần test phone) |
 | NFR-08 | **Chính xác** | Client tính khớp DB view (margin client = `v_project_margin`) | ✅ |
-| NFR-09 | **Bền vững khi đổi catalog** | Không hardcode mã role/type trong logic (`renderConflicts`, dropdown loại dự án nạp động) | ✅ |
-| NFR-10 | **Khả kiểm thử** | Test bằng **harness jsdom chạy code app thật + REST live** (bắt được bug runtime) | ✅ |
+| NFR-09 | **Bền vững khi đổi catalog** | Không hardcode mã role/type trong logic: `renderConflicts` lọc động, dropdown loại dự án nạp động, **`MGMT_ROLES`/`PRIMARY_ROLES` nạp từ `ref_roles.is_management`/`is_primary`** (không còn mảng cứng) | ✅ |
+| NFR-10 | **Khả kiểm thử** | Harness jsdom chạy code app thật, **đã commit `test/smoke.mjs` + `npm test`** và **CI GitHub Action** chạy mỗi push/PR (bắt lỗi runtime như `const`→`let`); regression REST-live vẫn dùng on-demand | ✅ |
 
 ## Phụ lục B — Dữ liệu & Phân quyền (con trỏ)
 

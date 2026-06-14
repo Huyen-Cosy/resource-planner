@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Bỏ qua commit do automation (nếu sau này có) để tránh loop
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Secret scan (chặn token/key trong file track)
+        run: |
+          # Anon key Supabase (eyJ...) trong web/index.html là HỢP LỆ (theo thiết kế RLS) — KHÔNG quét.
+          # Chỉ chặn secret thật: PAT Vercel/Supabase, private key.
+          if git grep -nIE '(sbp|vcp)_[A-Za-z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY|SUPABASE_SERVICE_ROLE_KEY *= *eyJ'; then
+            echo "::error::Phát hiện secret trong file được git track — gỡ ra khỏi history trước khi merge."
+            exit 1
+          fi
+          echo "Secret scan OK."
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install (dev harness)
+        run: npm ci
+
+      - name: Smoke test (jsdom chạy code app thật)
+        run: npm test

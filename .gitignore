@@ -10,3 +10,6 @@
 # OS / editor
 .DS_Store
 *.swp
+
+# dev test harness
+node_modules/

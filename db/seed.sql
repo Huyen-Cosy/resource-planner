@@ -9,17 +9,17 @@
 -- =====================================================================
 
 -- ---- Catalog role (declared_capacity = năng lực khai báo) -------------
-insert into ref_roles (code, name, declared_capacity, sort_order) values
-  ('DE','Data Engineer',4,1),
-  ('DS','Data Scientist',3,2),
-  ('DA','Data Analyst',4,3),
-  ('PM','Project Manager',3,4),
-  ('PO','Product Owner',2,5),
-  ('DATA_LEAD','Data Lead',1,6),
-  ('ARCH','Architecture Lead',1,7),
-  ('LARK','Lark Admin',1,8),
-  ('FIN','Finance Support',1,9),
-  ('DESIGN','Mockup Designer',1,10);
+insert into ref_roles (code, name, declared_capacity, sort_order, is_management, is_primary) values
+  ('DE','Data Engineer',4,1,false,true),
+  ('DS','Data Scientist',3,2,false,false),
+  ('DA','Data Analyst',4,3,false,true),
+  ('PM','Project Manager',3,4,false,true),
+  ('PO','Product Owner',2,5,true,false),
+  ('DATA_LEAD','Data Lead',1,6,true,false),
+  ('ARCH','Architecture Lead',1,7,true,false),
+  ('LARK','Lark Admin',1,8,false,false),
+  ('FIN','Finance Support',1,9,false,false),
+  ('DESIGN','Mockup Designer',1,10,false,true);
 
 -- ---- Rate gợi ý theo level (triệu/tháng) -------------------------------
 insert into ref_level_rates (level, monthly_rate) values

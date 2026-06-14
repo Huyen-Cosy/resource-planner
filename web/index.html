@@ -773,9 +773,11 @@ const LEVELS=['Intern','Junior','Middle','Senior','Lead'];
 const HOURS_PER_MONTH=160; /* quy đổi hourly → monthly để tính chi phí */
 /* Role quản lý (PO/Tech Lead/Data Lead): chi phí tính qua management% (overhead), KHÔNG allocate
    giao việc dự án trực tiếp (D5). Dùng để gắn nhãn ở bảng "Dư địa nhận thêm việc". */
-const MGMT_ROLES=['PO','ARCH','DATA_LEAD'];
-/* 4 role chính của 1 dự án data — ưu tiên hiển thị đầu + để mặc định 1 người (what-if, lưu nhanh) */
-const PRIMARY_ROLES=['DE','DA','PM','DESIGN'];
+/* Default; nạp lại từ ref_roles.is_management khi load (NFR-09: không hardcode mã role trong logic) */
+let MGMT_ROLES=['PO','ARCH','DATA_LEAD'];
+/* 4 role chính của 1 dự án data — ưu tiên hiển thị đầu + để mặc định 1 người (what-if, lưu nhanh).
+   Default; nạp lại từ ref_roles.is_primary khi load. */
+let PRIMARY_ROLES=['DE','DA','PM','DESIGN'];
 /* rate gợi ý mặc định theo level (triệu/người-tháng) — dùng khi tạo nhanh hoặc chưa gán người */
 let levelRate={Intern:12,Junior:28,Middle:45,Senior:70,Lead:95};
 let PROJECT_TYPES=['BI_DASHBOARD','DATA_PLATFORM','DATA_PIPELINE','AI_ML'];  /* nạp lại từ ref_project_types khi load */
@@ -2438,6 +2440,11 @@ async function loadFromSupabase(){
   ROLES=roles.map(r=>r.code);
   roleName={}; declaredCap={};
   roles.forEach(r=>{ roleName[r.code]=r.name; declaredCap[r.code]=+r.declared_capacity||0; });
+  /* Nhóm role lấy từ DB (NFR-09) — giữ default nếu cột chưa tồn tại / chưa set (tương thích ngược) */
+  const _mgmt=roles.filter(r=>r.is_management).map(r=>r.code);
+  const _prim=roles.filter(r=>r.is_primary).map(r=>r.code);
+  if(_mgmt.length)MGMT_ROLES=_mgmt;
+  if(_prim.length)PRIMARY_ROLES=_prim;
 
   /* --- loại dự án (khớp FK ref_project_types) --- */
   const {data:ptypes}=await sb.from('ref_project_types').select('code').order('code');

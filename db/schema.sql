@@ -54,7 +54,9 @@ create table if not exists ref_roles (
   code              text primary key,            -- 'DE','DS','DA','PM','PO','DATA_LEAD','ARCH','LARK','FIN','DESIGN'...
   name              text not null,
   declared_capacity numeric default 0,           -- năng lực KHAI BÁO (fallback khi chưa có người thật)
-  sort_order        int default 0
+  sort_order        int default 0,
+  is_management     boolean not null default false, -- chi phí tính qua management% (overhead), KHÔNG allocate trực tiếp (D5)
+  is_primary        boolean not null default false  -- role chính của dự án data — ưu tiên hiển thị + default what-if/lưu nhanh
 );
 
 -- Rate gợi ý theo level — DỮ LIỆU NHẠY CẢM (chỉ finance đọc, qua v_level_rates)

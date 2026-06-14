@@ -1,0 +1,13 @@
+{
+  "name": "resource-planner-tests",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Dev-only test harness (jsdom smoke test). KHÔNG phải build pipeline cho app — web/index.html vẫn vanilla, deploy nguyên file. Vercel rootDirectory=web nên không nhìn thấy file này. Phục vụ NFR-10 (test bằng jsdom chạy code app thật).",
+  "scripts": {
+    "test": "node test/smoke.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  }
+}
