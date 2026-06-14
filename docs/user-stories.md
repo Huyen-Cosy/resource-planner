@@ -127,6 +127,14 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 - **Done:** tạo sẵn account (admin-create pre-confirmed) + domain `idealab-planner.vercel.app`.
 - **Pending:** member tự đăng ký cần xác nhận email (cân nhắc bật auto-confirm).
 
+### US-6.4 — Hướng dẫn sử dụng ngay trên trang ✅
+**As a** member mới (PM hoặc CEO), **I want** một trang hướng dẫn ngay trong app, **so that** dùng được mà không cần training/đọc tài liệu riêng.
+- **Given** tôi đăng nhập
+- **When** bấm tab **❓ Hướng dẫn** ở thanh điều hướng
+- **Then** thấy: (1) tool để làm gì + nguyên tắc PLANNING-không-TRACKING; (2) quickstart 4 bước; (3) 8 màn hình dùng để làm gì; (4) thuật ngữ chủ chốt (gập); (5) ghi chú quyền-theo-role.
+- **And** với role `pm`, mọi mục liên quan tiền (rate/chi phí/margin/doanh thu) **tự ẩn** qua `.fin-only` — hướng dẫn khớp đúng thứ họ thấy.
+- **Note:** trang tĩnh, không thêm JS — dùng lại handler `go()` sẵn có.
+
 ---
 
 ## EPIC 7 — Trải nghiệm đa thiết bị
@@ -155,7 +163,7 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 | 3 — Bức tranh & quyết định | US-3.1…3.7 | ✅ Done |
 | 4 — Tài chính kế hoạch | US-4.1…4.3 | ✅ Done |
 | 5 — Vòng học | US-5.1 | ✅ Done |
-| 6 — Phân quyền & vận hành | US-6.1…6.3 | ✅ / ◻️ onboard |
+| 6 — Phân quyền & vận hành | US-6.1…6.4 | ✅ / ◻️ onboard |
 | 7 — Mobile | US-7.1 | ◻️ Vòng 1 (cần vòng 2) |
 | 8 — AI | US-8.1 | 🔵 Backlog (Phase 5) |
 

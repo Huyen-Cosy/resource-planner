@@ -230,6 +230,7 @@ body.role-pm .fin-only{display:none!important}
     <button class="navbtn" data-tab="t4"><span class="dot"></span>Tạo dự án mới</button>
     <button class="navbtn" data-tab="t5"><span class="dot"></span>Đóng dự án</button>
     <button class="navbtn" data-tab="t6"><span class="dot"></span>Cấu hình</button>
+    <button class="navbtn" data-tab="thelp" style="margin-top:6px;color:var(--moss)"><span class="dot"></span>❓ Hướng dẫn</button>
   </nav>
   <div class="foot">Nguồn dữ liệu: <b>Supabase</b><br><span id="footCount"></span></div>
   <div class="userchip" id="userChip" style="display:none">
@@ -682,6 +683,68 @@ body.role-pm .fin-only{display:none!important}
       </table>
       <p class="hint">"Áp dụng" cập nhật <span class="mono">ref_norms</span> — mọi lần AI estimate sau (Claude Code lẫn nút web) tự dùng hệ số mới.</p>
     </div>
+  </div>
+</section>
+
+<!-- ============ HƯỚNG DẪN SỬ DỤNG ============ -->
+<section class="tab" id="thelp">
+  <div class="pagehead" style="margin-bottom:10px">
+    <div>
+      <h1 style="margin:0">❓ Hướng dẫn sử dụng</h1>
+      <span class="sub">đọc 2 phút là dùng được — không cần training</span>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:var(--moss)">
+    <h2 style="margin-top:0">Tool này để làm gì?</h2>
+    <p style="font-size:13.5px;line-height:1.7;margin:0 0 8px">Tổng hợp kế hoạch nhân sự của <b>nhiều dự án</b> thành <b>một bức tranh nguồn lực toàn công ty</b> + tài chính kế hoạch, để PM lập kế hoạch và CEO/BOD quyết định: tháng nào thiếu/dư người, dự án nào lỗ, còn nhận thêm việc được không.</p>
+    <p style="font-size:13.5px;line-height:1.7;margin:0;padding:8px 12px;background:rgba(127,127,127,.07);border-radius:8px"><b>⚠ Đây là công cụ PLANNING, không phải TRACKING.</b> Mọi con số là <b>kế hoạch dự kiến</b> — không có % hoàn thành, không chi tiêu thực tới hôm nay, không cờ quá hạn. Dùng để quyết định <i>trước</i>, không theo dõi <i>sau</i>.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Bắt đầu từ đâu — 4 bước</h2>
+    <ol style="font-size:13.5px;line-height:1.8;margin:0;padding-left:20px">
+      <li><b>Tạo dự án</b> ở tab <b>Tạo dự án mới</b> → điền tên/loại/tháng bắt đầu/deadline → bấm <b>“💾 Lưu nhanh với mặc định”</b> để có ngay khung kế hoạch.</li>
+      <li><b>Tinh chỉnh</b> ở tab <b>Chi tiết dự án</b>: chia phase, nhập số người mỗi role × tháng, <span class="fin-only">đặt doanh thu, </span>rồi (tuỳ chọn) gán tên người cụ thể. Bấm <b>💾 Lưu</b>.</li>
+      <li><b>Xem bức tranh chung</b> ở tab <b>Bức tranh công ty</b> (thiếu/dư người theo role × tháng) và <b>Nguồn lực cá nhân</b> (ai đang quá tải).</li>
+      <li class="fin-only"><b>Quyết định</b> ở tab <b>Tổng quan CEO</b>: margin từng dự án, dư địa nhận việc, và mô phỏng <b>what-if</b> trước khi nhận dự án mới.</li>
+    </ol>
+    <p class="sub" style="margin:10px 0 0;font-size:12px">💡 Gán tên người là <b>tuỳ chọn</b> — mọi tính năng vẫn chạy khi bạn mới chỉ khai “cần bao nhiêu người mỗi role”, chưa biết ai.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">8 màn hình dùng để làm gì</h2>
+    <div style="display:grid;gap:0;font-size:13px">
+      <div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)"><b style="min-width:140px">Tổng quan CEO</b><span>Góc nhìn quyết định: KPI<span class="fin-only"> doanh thu/margin</span>, cảnh báo thiếu người, <b>dư địa nhận việc</b>, <b>what-if</b> (mô phỏng nhận thêm dự án, không lưu).</span></div>
+      <div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)"><b style="min-width:140px">Bức tranh công ty</b><span>Ma trận <b>role × tháng</b>: nhu cầu (mọi dự án đang chạy) so với năng lực đội — đỏ là thiếu, dư thì gợi ý nhận thêm việc.</span></div>
+      <div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)"><b style="min-width:140px">Dự án</b><span>Danh sách toàn bộ dự án + trạng thái<span class="fin-only"> + margin</span>. Bấm vào để mở chi tiết.</span></div>
+      <div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)"><b style="min-width:140px">Chi tiết dự án</b><span>Nơi <b>nhập kế hoạch</b>: phase (roadmap), số người role × tháng, gán người cụ thể (cảnh báo quá tải xuyên dự án)<span class="fin-only">, tài chính + cấu thành chi phí</span>. Nhớ bấm 💾 Lưu.</span></div>
+      <div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)"><b style="min-width:140px">Nguồn lực cá nhân</b><span>Tải của <b>từng người</b> (hoặc theo role / toàn đội) qua các tháng — đỏ khi vượt 100% (cộng mọi dự án).</span></div>
+      <div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)"><b style="min-width:140px">Tạo dự án mới</b><span>Nhập tay (Cách 1) hoặc <b>Lưu nhanh mặc định</b>. <span class="tag">Cách 2 — AI gợi ý: Phase sau</span></span></div>
+      <div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)"><b style="min-width:140px">Đóng dự án</b><span>Khi dự án xong: nhập số <b>thực tế</b> theo role → tool ghi lại để <b>học norms</b> (so kế hoạch vs thực tế cho lần ước lượng sau). Đóng xong sẽ giải phóng nguồn lực.</span></div>
+      <div style="display:flex;gap:12px;padding:9px 0"><b style="min-width:140px">Cấu hình</b><span>Quản lý nhân sự, role, <span class="fin-only">rate theo level (cá nhân), </span>năng lực khai báo<span class="fin-only"> và phân quyền người dùng</span>.</span></div>
+    </div>
+  </div>
+
+  <details class="card">
+    <summary style="cursor:pointer;font-weight:600;font-size:14px">📖 Thuật ngữ chủ chốt <span class="tag">bấm để mở</span></summary>
+    <ul style="font-size:13px;line-height:1.7;margin:10px 0 0;padding-left:18px">
+      <li><b>Người-tháng</b> = 1 người làm full-time trong 1 tháng. “3.5 người-tháng rảnh” = chứa thêm được khối việc bằng 3.5 tháng-công của 1 người.</li>
+      <li><b>Allocation (mức role)</b> vs <b>Assignment (mức cá nhân)</b>: allocation là “cần mấy người role này tháng này”; assignment là gán đích danh tên người. Allocation là lớp cơ bản, assignment là lớp phủ thêm (tuỳ chọn).</li>
+      <li><b>Nhu cầu</b> = tổng người mỗi role × tháng từ các dự án <b>đang chạy</b>. <b>Năng lực</b> = số người thật của role trong đội.</li>
+      <li><b>Dư địa</b> = phần (năng lực − nhu cầu) còn <b>dương</b> trong khoảng tháng đang xét. Tháng thiếu thì cảnh báo riêng, không bù trừ.</li>
+      <li class="fin-only"><b>Rate theo cá nhân</b> (level + monthly/hourly), không theo role. <b>Chi phí</b> = phần đã gán tính theo rate cá nhân + phần chưa gán ước theo rate trung bình role + chi phí khác + management%.</li>
+      <li class="fin-only"><b>Margin</b> = doanh thu − tổng chi phí. <b>Đây là thước đo lời/lỗ duy nhất</b> — âm là lỗ kế hoạch (hiện đỏ).</li>
+      <li><b>Estimate vs Actual</b>: số kế hoạch (lúc tạo) so số thực tế (lúc đóng dự án) → tool dùng để gợi ý chuẩn ước lượng cho dự án sau.</li>
+    </ul>
+  </details>
+
+  <div class="card" style="background:rgba(127,127,127,.05)">
+    <h2 style="margin-top:0">Bạn thấy gì tuỳ theo quyền</h2>
+    <p style="font-size:13px;line-height:1.7;margin:0">
+      <b>PM</b> thấy toàn bộ kế hoạch nguồn lực (role, người, tháng, tải) nhưng <b>mọi con số tiền được ẩn</b> (doanh thu, rate, chi phí, margin).<br>
+      <b>CEO / BOD / Admin (finance)</b> thấy <b>đầy đủ</b>, gồm cả tài chính kế hoạch. Phân quyền khoá ở tầng cơ sở dữ liệu, không phải chỉ ẩn trên giao diện.
+    </p>
   </div>
 </section>
 
