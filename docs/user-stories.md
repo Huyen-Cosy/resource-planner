@@ -1,6 +1,6 @@
 # User Stories — Resource Planner (ideaLAB)
 
-> **Mục đích:** diễn đạt yêu cầu theo góc **người dùng** (As a… I want… so that…) + **tiêu chí chấp nhận** (Given/When/Then). Truy vết về `SRS.md` (FR). Trạng thái: ✅ Done · 🔵 Backlog · ◻️ Một phần.
+> **🟢 DOC YÊU CẦU SỐNG (LIVING)** — nguồn sự thật yêu cầu duy nhất được cập nhật theo từng commit. Diễn đạt theo góc **người dùng** (As a… I want… so that…) + **tiêu chí chấp nhận** (Given/When/Then) = Definition of Done để test. **NFR ở Phụ lục A**; dữ liệu/RBAC trỏ `DATABASE.md` (Phụ lục B). `SRS.md`/`BRD.md` là baseline snapshot, regenerate từ doc này + code khi cần. Trạng thái: ✅ Done · 🔵 Backlog · ◻️ Một phần.
 >
 > **Phiên bản:** 1.0 · **Ngày:** 14/06/2026 · **Vai:** PO/BA.
 
@@ -158,3 +158,27 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 | 6 — Phân quyền & vận hành | US-6.1…6.3 | ✅ / ◻️ onboard |
 | 7 — Mobile | US-7.1 | ◻️ Vòng 1 (cần vòng 2) |
 | 8 — AI | US-8.1 | 🔵 Backlog (Phase 5) |
+
+---
+
+## Phụ lục A — Yêu cầu phi chức năng (NFR)
+
+> Gộp về đây từ `SRS.md` để **một doc yêu cầu sống duy nhất**. Khi đụng các điểm này lúc build, cập nhật ngay tại đây.
+
+| ID | Loại | Yêu cầu | TT |
+|---|---|---|---|
+| NFR-01 | **Bảo mật** | Số tiền chặn ở **tầng DB** (RLS + security-definer view `is_finance()`); anon key nhúng client an toàn nhờ RLS; guard trigger chặn PM ghi cột tiền | ✅ |
+| NFR-02 | **Bảo mật** | Không commit secret (service_role/LLM key/PAT/mật khẩu) vào file git-track | ✅ |
+| NFR-03 | **Toàn vẹn dữ liệu** | Constraint DB = lưới an toàn: FK role/type, percent 0–100, headcount ≤ 50, month = ngày 01, end ≥ start, UNIQUE | ✅ |
+| NFR-04 | **Hiệu năng / chi phí** | Mọi tính toán = SQL view → 0 token vận hành; free tier | ✅ |
+| NFR-05 | **Khả dụng** | Web tĩnh, không build pipeline; deploy = copy file | ✅ |
+| NFR-06 | **Tương thích** | Vanilla HTML/JS, chạy mọi browser hiện đại; Supabase JS qua CDN | ✅ |
+| NFR-07 | **Responsive** | Đọc-trước trên mobile (ghim cột đầu, KPI/card gọn, bảng cuộn ngang) | ◻️ Vòng 1 (cần test phone) |
+| NFR-08 | **Chính xác** | Client tính khớp DB view (margin client = `v_project_margin`) | ✅ |
+| NFR-09 | **Bền vững khi đổi catalog** | Không hardcode mã role/type trong logic (`renderConflicts`, dropdown loại dự án nạp động) | ✅ |
+| NFR-10 | **Khả kiểm thử** | Test bằng **harness jsdom chạy code app thật + REST live** (bắt được bug runtime) | ✅ |
+
+## Phụ lục B — Dữ liệu & Phân quyền (con trỏ)
+
+- **Yêu cầu dữ liệu** (bảng + view tính toán): nguồn sống ở `DATABASE.md`; đặc tả schema gốc ở `SPEC.md §4`.
+- **Ma trận RBAC** (`pm` / `finance` × hành động): nguồn sống ở `DATABASE.md` (RLS + view RBAC). Đừng nhân bản bảng RBAC ở đây.

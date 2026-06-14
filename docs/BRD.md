@@ -1,6 +1,8 @@
 # BRD — Business Requirements Document
 ## Resource Planner (ideaLAB)
 
+> **⚠ BASELINE SNAPSHOT @14/06/2026 — đổi hiếm, chỉ cập nhật khi mục tiêu/scope nghiệp vụ thay đổi** (không sửa theo từng tính năng). Yêu cầu sống = `user-stories.md`; lý do thiết kế = `DECISIONS.md`.
+>
 > **Mục đích tài liệu:** ghi nhận *vì sao* xây sản phẩm và *cần đạt điều gì* ở mức nghiệp vụ. Bổ trợ cho `SPEC.md` (kỹ thuật) và `DECISIONS.md` (lý do kiến trúc). Cặp đôi với `SRS.md` (chức năng chi tiết) và `user-stories.md`.
 >
 > **Phiên bản:** 1.0 · **Ngày:** 14/06/2026 · **Tác giả:** Claude Code (vai PO/BA) · **Trạng thái sản phẩm:** MVP + Phase 2.5 (UX hardening) đã go-live.

@@ -1,6 +1,8 @@
 # SRS — Software Requirements Specification
 ## Resource Planner (ideaLAB)
 
+> **⚠ BASELINE SNAPSHOT @14/06/2026 — KHÔNG sửa từng commit.** Doc yêu cầu **sống** là `user-stories.md` (NFR đã chuyển vào Phụ lục A của nó). File này là bản formal chụp tại thời điểm, dùng khi cần FR formal (khách/đấu thầu/sign-off) — **regenerate từ `user-stories.md` + code khi cần**, đừng maintain song song.
+>
 > **Mục đích:** đặc tả **chức năng (FR)** và **phi chức năng (NFR)** chi tiết, có **truy vết** ngược về BR (xem `BRD.md`). Schema/view kỹ thuật đầy đủ ở `SPEC.md`. Lý do thiết kế ở `DECISIONS.md`.
 >
 > **Phiên bản:** 1.0 · **Ngày:** 14/06/2026 · **Vai:** PO/BA · Trạng thái: ✅ Done · 🔵 Backlog · ◻️ Một phần.

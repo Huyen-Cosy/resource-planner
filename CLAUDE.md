@@ -14,9 +14,9 @@
 |---|---|
 | Bắt nhịp trạng thái (đầu mỗi session) | `docs/PROJECT-CONTEXT.md` |
 | Vì sao thiết kế thế (chống đi-lùi) | `docs/DECISIONS.md` |
-| Yêu cầu nghiệp vụ / phạm vi / stakeholder | `docs/BRD.md` |
-| Chức năng chi tiết (FR/NFR) + ma trận RBAC | `docs/SRS.md` |
-| Hành vi theo người dùng (epic/story/acceptance) | `docs/user-stories.md` |
+| Yêu cầu nghiệp vụ / phạm vi / stakeholder | `docs/BRD.md` 📸 *baseline* |
+| Chức năng chi tiết (FR/NFR) formal | `docs/SRS.md` 📸 *baseline — NFR đã chuyển sang user-stories* |
+| **Yêu cầu sống** (epic/story/acceptance + NFR) | `docs/user-stories.md` 🟢 *LIVING* |
 | Schema / view / RLS / công thức cost–margin | `docs/DATABASE.md` |
 | Đặc tả gốc 8 tab + tiêu chí nghiệm thu | `docs/SPEC.md` |
 | Việc CỐ Ý hoãn (đừng làm sớm) | `docs/BACKLOG.md` |
@@ -76,15 +76,18 @@ Mockup v17 (bản gần nhất) đã thêm 3 ràng buộc ở luồng **t4 — T
 - **Khi đổi hướng thiết kế:** cập nhật `docs/DECISIONS.md` (và SPEC nếu cần) để Claude Chat và Claude Code không lệch. Đây là điểm đồng bộ chung giữa hai nơi.
 - **Definition of Done — luật chống lệch tài liệu (Lớp 2):** mỗi thay đổi PHẢI cập nhật doc liên quan **trong CÙNG commit**. Ánh xạ:
 
-  | Đổi gì trong code/DB | Phải cập nhật doc |
+  | Đổi gì trong code/DB | Phải cập nhật doc (LIVING) |
   |---|---|
   | `db/schema.sql` / `db/views.sql` | `DATABASE.md` (+ `SPEC.md` nếu đụng đặc tả) |
-  | Tính năng / hành vi UI (mới hoặc sửa) | `SRS.md` (FR) + `user-stories.md` + `PROJECT-CONTEXT.md` (status) |
+  | Tính năng / hành vi UI (mới hoặc sửa) | `user-stories.md` (story + acceptance; NFR ở Phụ lục A) + `PROJECT-CONTEXT.md` (status) |
   | Đổi hướng thiết kế | `DECISIONS.md` |
-  | Phạm vi / yêu cầu nghiệp vụ | `BRD.md` |
   | Hoãn / bỏ việc | `BACKLOG.md` |
 
-  **Cuối mỗi session (Lớp 3):** rà `PROJECT-CONTEXT.md` (status) + doc bị ảnh hưởng → commit chung. Nguyên tắc: *code và doc đi cùng nhau, không để doc lệch quá 1 commit.*
+  **Phân loại doc — chỉ LIVING mới cập nhật theo commit:**
+  - 🟢 **LIVING** (sửa mỗi commit liên quan): `PROJECT-CONTEXT.md`, `DECISIONS.md`, `DATABASE.md`, **`user-stories.md`** (doc yêu cầu sống duy nhất — đã gộp NFR).
+  - 📸 **BASELINE SNAPSHOT** (KHÔNG sửa từng commit): `BRD.md`, `SRS.md`. Chỉ **regenerate on-demand** từ `user-stories.md` + code khi cần bản formal (milestone / gửi stakeholder / handoff / đấu thầu), hoặc khi **scope nghiệp vụ** đổi (riêng BRD). Lý do: 3 doc yêu cầu chồng lấp → maintain song song = churn + lệch; Claude tái sinh được từ nguồn sống nên không cần giữ liên tục.
+
+  **Cuối mỗi session (Lớp 3):** rà `PROJECT-CONTEXT.md` (status) + doc LIVING bị ảnh hưởng → commit chung. Nguyên tắc: *code và doc-sống đi cùng nhau, không để lệch quá 1 commit.*
 - **Sửa thiết kế & mockup:** Claude Code ĐƯỢC PHÉP đổi thiết kế, sửa mockup, thử UX trực tiếp tại đây — không cần chuyển qua Claude Chat. Điều kiện duy nhất: khi đổi hướng thiết kế, cập nhật `docs/DECISIONS.md` (và SPEC nếu cần) ngay trong cùng đợt sửa để mọi session sau không lệch.
 
 ## Bắt đầu từ đâu
