@@ -89,6 +89,8 @@ Mockup v17 (bản gần nhất) đã thêm 3 ràng buộc ở luồng **t4 — T
 
   **Cuối mỗi session (Lớp 3):** rà `PROJECT-CONTEXT.md` (status) + doc LIVING bị ảnh hưởng → commit chung. Nguyên tắc: *code và doc-sống đi cùng nhau, không để lệch quá 1 commit.*
 - **Sửa thiết kế & mockup:** Claude Code ĐƯỢC PHÉP đổi thiết kế, sửa mockup, thử UX trực tiếp tại đây — không cần chuyển qua Claude Chat. Điều kiện duy nhất: khi đổi hướng thiết kế, cập nhật `docs/DECISIONS.md` (và SPEC nếu cần) ngay trong cùng đợt sửa để mọi session sau không lệch.
+- **Gate chất lượng — `/sa-review`:** repo có subagent **`tech-reviewer`** (`.claude/agents/`) + slash command **`/sa-review [full|web|db|deploy|docs|<change>]`** (`.claude/commands/`). Chạy 8 checkpoint (5 luật bất biến · bảo mật tiền DB · schema · secret · doc-sync · test & **verify-live** · ops/deploy · performance) → báo cáo PASS/WARN/FAIL + verdict go-live. **Nên chạy trước khi go-live / sau thay đổi lớn / khi review PR.** Review chỉ-đọc, không tự sửa.
+- **Deploy = git auto-deploy:** project Vercel `web` đã nối GitHub (`rootDirectory=web`, `prodBranch=main`). **Push `main` là tự lên production** — KHÔNG còn CLI tay. Thay đổi `web/` chưa coi là "done" cho tới khi **verify live** (deployment `src=git state=READY` cho commit mới nhất). Đừng báo done khi mới chỉ push.
 
 ## Bắt đầu từ đâu
 Nếu repo chưa có gì trong `db/`: bắt đầu **Phase 1**. Đọc SPEC.md §4 (schema) + §9 (nghiệm thu), dựng `db/schema.sql`, `db/seed.sql`, `db/views.sql`, rồi in hướng dẫn tạo Supabase project và chạy SQL (Claude Code không tự đăng nhập Supabase của người dùng được — bước tạo project + chạy SQL là việc tay của họ).
