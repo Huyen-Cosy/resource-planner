@@ -52,3 +52,17 @@ select * from v_project_margin;   -- ra margin 2 dự án
 select * from v_capacity_gap;     -- bức tranh thiếu/đủ người
 ```
 Khi web app chạy (Phase 2): đăng nhập bằng tài khoản `pm` → các view tài chính (`v_project_margin`, `v_employee_cost`…) trả **0 dòng**; đăng nhập `finance` → thấy đầy đủ. Đó là RBAC hoạt động.
+
+---
+
+## Môi trường STAGING — schema `stg` (sandbox test, $0)
+
+Free-tier Supabase chỉ cho 2 project active/org → thay vì project riêng, **staging = schema `stg`** ngay trong project này. Mục đích: **diễn tập migration** (vd D22–D24) + **test logic cost/view** mà KHÔNG đụng dữ liệu production ở schema `public`.
+
+**Dựng / làm mới** (idempotent — `stg` bị drop & rebuild mỗi lần):
+1. Chạy `db/staging.sql` → tạo schema `stg`, clone cấu trúc 12 bảng + **COPY dữ liệu hiện tại** từ `public`.
+2. Chạy: `set search_path = stg, public;` rồi `db/views.sql` → 17 view tạo trong `stg`, tham chiếu bảng `stg` + `stg.is_finance()`.
+
+> `stg.is_finance()` luôn **TRUE** → view tiền (cost/margin) MỞ trong sandbox để verify công thức. ⚠️ Vì vậy **KHÔNG** dùng `stg` để kiểm thử RLS/phân quyền (cần project riêng — ngoài phạm vi staging-schema). Cô lập yếu hơn project riêng (chung auth/anon key) nhưng đủ cho rehearsal + logic test, và $0.
+
+**Quy trình đề xuất cho mỗi đợt đổi schema/view:** rebuild `stg` từ prod → áp migration lên `stg` → verify số liệu/cost trên `stg` → xanh mới áp lên `public`.
