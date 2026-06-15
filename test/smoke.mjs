@@ -30,13 +30,28 @@ const MOCK = {
   v_employees_public: [
     { id: "e1", name: "An",   role_code: "DE", active: true, level: "Senior" },
     { id: "e2", name: "Binh", role_code: "PM", active: true, level: "Middle" },
+    { id: "e3", name: "Chi",  role_code: "DA", active: true, level: "Middle" },
   ],
-  v_employee_cost: [{ employee_id: "e1", rate_type: "monthly", rate: 70 }],
-  v_projects_public: [],
-  v_projects_finance: [],
+  v_employee_cost: [
+    { employee_id: "e1", rate_type: "monthly", rate: 70 },
+    { employee_id: "e3", rate_type: "monthly", rate: 45 },
+  ],
+  // dự án bắt đầu trong QUÁ KHỨ (2025-10) → kích ANCHOR lùi lúc load (Phần 2)
+  v_projects_public: [
+    { id: "p1", name: "Past Proj", project_type: "BI_DASHBOARD", pm_owner: "Test",
+      priority: 1, roles: ["DA"], start_month: "2025-10-01", end_month: "2026-04-01", status: "active" },
+  ],
+  v_projects_finance: [{ id: "p1", revenue: 800, other_cost: 0, mgmt_pct: 10 }],
   phases: [],
-  allocations: [],
-  assignments: [],
+  // allocation DA chỉ khai 2025-10 (1 người) — KHÔNG khai 2026-01
+  allocations: [
+    { project_id: "p1", role_code: "DA", month: "2025-10-01", headcount: 1, kind: "estimate" },
+  ],
+  // assignment: 2025-10 trong KH; 2026-01 NGOÀI KH (role chưa khai allocation tháng đó) → path (B)
+  assignments: [
+    { project_id: "p1", role_code: "DA", month: "2025-10-01", employee_id: "e3", percent: 100 },
+    { project_id: "p1", role_code: "DA", month: "2026-01-01", employee_id: "e3", percent: 100 },
+  ],
   app_llm_configs: [],
 };
 
@@ -96,6 +111,19 @@ for (let i = 0; i < 60; i++) {
   if (footEl() && footEl().textContent.trim()) { ok = true; break; }
 }
 
+// ---- Mở chi tiết dự án để chạy renderDetail/renderAlloc/renderAssign (path (B) + ANCHOR quá khứ) ----
+let detailHtml = "";
+try {
+  if (typeof dom.window.openProject === "function") {
+    dom.window.openProject("p1");
+    await wait(200);
+    const box = dom.window.document.getElementById("assignBox");
+    detailHtml = box ? box.innerHTML : "";
+  }
+} catch (e) {
+  scriptErrors.push({ detail: "openProject ném: " + e.message });
+}
+
 // ---- Assertions ----
 const fails = [];
 if (scriptErrors.length) {
@@ -108,6 +136,12 @@ const doc = dom.window.document;
 const appRoot = doc.getElementById("appRoot");
 if (ok && appRoot && appRoot.style.display === "none") {
   fails.push("appRoot vẫn ẩn → afterLogin chưa hiện app.");
+}
+// (B) chi tiết dự án phải render + nhận diện gán ngoài kế hoạch (2026-01 không có allocation)
+if (ok && !detailHtml) {
+  fails.push("Mở chi tiết dự án nhưng assignBox rỗng.");
+} else if (ok && !detailHtml.includes("syncAllocFromAssign")) {
+  fails.push("renderAssign KHÔNG phát hiện gán ngoài kế hoạch (path B có thể vỡ). assignBox len=" + detailHtml.length);
 }
 
 if (fails.length) {

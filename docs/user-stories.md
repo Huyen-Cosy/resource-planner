@@ -55,6 +55,21 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 - **When** màn hình refresh
 - **Then** banner liệt kê lượt quá tải + chip đỏ ⚠ tại ô gán; ở t7 ô tải hiện **đỏ**.
 
+### US-2.3 — Gán người NGOÀI kế hoạch + đồng bộ thủ công ✅ `D21`
+**As a** PM, **I want** gán người ở tháng mà role **chưa khai allocation**, **so that** ghi nhận effort cá nhân phát sinh ngoài roadmap/phân bổ.
+- **Given** role chưa có số ở Phân bổ nguồn lực cho tháng X
+- **When** tôi bulk-assign người vào tháng X
+- **Then** ô hiện nhãn **"ngoài KH"** (tím) + banner "⚠ N lượt gán ngoài kế hoạch"; chi phí người đó **vẫn vào margin**, nhưng bức tranh công ty chỉ đếm theo Phân bổ.
+- **And** nút **"⤓ Đồng bộ phân bổ theo người đã gán"** bơm `alloc=max(hiện tại, Σngười)` — ghi đè kế hoạch là **thủ công, có chủ đích** (không tự động; KHÔNG phải B2/B3).
+- **Not:** KHÔNG thêm "cột thực tế" (vi phạm D1 — "thực tế" dành cho luồng Đóng dự án).
+
+### US-1.6 — Khung thời gian linh hoạt (quá khứ + tương lai) ✅ `D20`
+**As a** PM, **I want** chọn tháng bắt đầu/kết thúc **tùy ý** trong quá khứ (≥2020-01) và tương lai (≤2035-12), **so that** nhập được dự án đã chạy từ trước và lập kế hoạch xa.
+- **Given** dự án bắt đầu trước mốc mặc định 2026-03
+- **When** tôi đặt tháng bắt đầu sớm hơn
+- **Then** trục tháng tự lùi (ANCHOR động + reindex), KHÔNG còn chặn "không thể trước mốc kế hoạch".
+- **And** dữ liệu đã lưu không đổi (DB lưu ngày tuyệt đối).
+
 ---
 
 ## EPIC 3 — Bức tranh & quyết định (CEO/BOD)
@@ -158,8 +173,8 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 
 | Epic | Stories | Trạng thái |
 |---|---|---|
-| 1 — Lập kế hoạch | US-1.1…1.5 | ✅ Done |
-| 2 — Gán người & quá tải | US-2.1…2.2 | ✅ Done |
+| 1 — Lập kế hoạch | US-1.1…1.6 | ✅ Done |
+| 2 — Gán người & quá tải | US-2.1…2.3 | ✅ Done |
 | 3 — Bức tranh & quyết định | US-3.1…3.7 | ✅ Done |
 | 4 — Tài chính kế hoạch | US-4.1…4.3 | ✅ Done |
 | 5 — Vòng học | US-5.1 | ✅ Done |

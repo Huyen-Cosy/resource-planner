@@ -284,7 +284,7 @@ body.role-pm .fin-only{display:none!important}
   <div class="card" style="border-color:var(--moss)">
     <h2>🔮 Mô phỏng "nếu nhận thêm dự án" (what-if) <span class="tag">không lưu — thử trước khi quyết nhận</span></h2>
     <div class="btnrow" style="margin-top:0;align-items:flex-end;flex-wrap:wrap">
-      <div><label style="margin-top:0">Tháng bắt đầu</label><input type="month" id="wfStart" value="2026-09" min="2026-06" max="2030-12"></div>
+      <div><label style="margin-top:0">Tháng bắt đầu</label><input type="month" id="wfStart" value="2026-09" min="2020-01" max="2035-12"></div>
       <div><label style="margin-top:0">Số tháng</label><input type="number" id="wfDur" value="5" min="1" max="24" style="width:70px"></div>
       <div class="fin-only"><label style="margin-top:0">Doanh thu (triệu)</label><input type="number" id="wfRev" value="800" min="0" step="50" style="width:120px"></div>
       <button class="btn ai" onclick="runWhatIf()">▶ Mô phỏng</button>
@@ -491,12 +491,12 @@ body.role-pm .fin-only{display:none!important}
       <div><label>Tên dự án</label><input type="text" id="pName" value="Dashboard vận hành kho — Khách E"></div>
       <div><label>Loại dự án</label><select id="pType"></select></div>
       <div><label>PM phụ trách</label><input type="text" id="pPM" value="Hiếu"></div>
-      <div><label>Tháng bắt đầu</label><input type="month" id="pStart" value="2026-08" min="2026-06" max="2030-12" onchange="onStartChange()"></div>
+      <div><label>Tháng bắt đầu</label><input type="month" id="pStart" value="2026-08" min="2020-01" max="2035-12" onchange="onStartChange()"></div>
       <div><label>Mức ưu tiên</label><select id="pPrio"><option>P1 — cam kết hợp đồng</option><option selected>P2 — quan trọng</option><option>P3 — linh hoạt</option></select></div>
       <div class="fin-only"><label>Giá trị hợp đồng — doanh thu (triệu VND)</label><input type="number" id="pRevenue" value="900" min="0" step="10"></div>
     </div>
     <div class="grid3">
-      <div><label>Deadline cứng (nếu có) <span class="tag" style="font-weight:400">chỉ là mốc tham chiếu</span></label><input type="month" id="pDeadline" value="2026-12" min="2026-06" max="2030-12" onchange="renderManual()"></div>
+      <div><label>Deadline cứng (nếu có) <span class="tag" style="font-weight:400">chỉ là mốc tham chiếu</span></label><input type="month" id="pDeadline" value="2026-12" min="2020-01" max="2035-12" onchange="renderManual()"></div>
     </div>
     <details style="margin-top:16px;border:1px dashed var(--line);border-radius:8px;padding:10px 14px;background:rgba(127,127,127,.04)">
       <summary style="cursor:pointer;font-weight:600;font-size:13px">🤖 Tiêu chí & tài liệu cho AI Generate <span class="tag" style="background:var(--idle-soft);color:var(--idle)">Phase sau — sẽ phát triển</span></summary>
@@ -592,7 +592,7 @@ body.role-pm .fin-only{display:none!important}
       <tbody></tbody>
     </table>
     </div>
-    <label>Thực tế kết thúc tháng</label><input type="month" id="closeEnd" min="2026-06" max="2030-12" style="max-width:220px">
+    <label>Thực tế kết thúc tháng</label><input type="month" id="closeEnd" min="2020-01" max="2035-12" style="max-width:220px">
     <label>Bài học chính (close note)</label>
     <textarea id="closeNote" placeholder="VD: Khách mới chưa từng có DWH — khảo sát nguồn dữ liệu tốn gấp đôi dự kiến. Lần sau nhân hệ số 1.5 cho phase hạ tầng."></textarea>
     <div class="btnrow">
@@ -764,7 +764,10 @@ body.role-pm .fin-only{display:none!important}
 
 <script>
 /* =================== DỮ LIỆU DEMO =================== */
-const ANCHOR='2026-03';
+const ANCHOR_DEFAULT='2026-03';   /* mốc mặc định khi chưa có dự án nào sớm hơn */
+const FLOOR_MONTH='2020-01';      /* sàn quá khứ cho phép chọn */
+const MAX_MONTH='2035-12';        /* trần tương lai cho phép chọn */
+let ANCHOR=ANCHOR_DEFAULT;        /* điểm-0 trục tháng — ĐỘNG: lùi về tháng bắt đầu sớm nhất khi load (DB lưu ngày tuyệt đối nên an toàn) */
 let roleName={DE:'Data Engineer',DS:'Data Scientist',DA:'Data Analyst',PM:'Project Manager',PO:'Product Owner',DATA_LEAD:'Data Lead',ARCH:'Architecture Lead',LARK:'Lark Admin',FIN:'Finance Support',DESIGN:'Mockup Designer'};
 let ROLES=['DE','DS','DA','PM','PO','DATA_LEAD','ARCH','LARK','FIN','DESIGN'];
 let declaredCap={DE:4,DS:3,DA:4,PM:3,PO:2,DATA_LEAD:1,ARCH:1,LARK:1,FIN:1,DESIGN:1};
@@ -960,6 +963,20 @@ function buildMonths(){ /* trục tháng động: ANCHOR → tháng kết thúc 
 }
 function mLabel(i){return 'T'+(+months[i].split('-')[1])+'/'+months[i].slice(2,4);}
 function av(p,r,i){return (p.alloc[r]&&p.alloc[r][i])?+p.alloc[r][i]:0;}
+/* === Khung thời gian linh hoạt === ANCHOR chỉ là điểm-0 render phía client (DB lưu ngày tuyệt đối).
+   extendAnchorTo: dời ANCHOR sớm hơn + chèn k tháng rỗng vào ĐẦU mọi mảng theo tháng (giữ index khớp). */
+function extendAnchorTo(month){
+  const k=mDiff(month,ANCHOR);        /* >0 nếu month sớm hơn ANCHOR */
+  if(k<=0)return;
+  const all=pending?[...projects,pending]:projects;
+  for(const p of all){
+    for(const r in (p.alloc||{}))  p.alloc[r] =Array(k).fill(0).concat(p.alloc[r]||[]);
+    for(const r in (p.actual||{})) p.actual[r]=Array(k).fill(0).concat(p.actual[r]||[]);
+    for(const r in (p.assign||{})) p.assign[r]=Array(k).fill(undefined).concat(p.assign[r]||[]);
+    (p.phases||[]).forEach(ph=>{ ph[1]+=k; ph[2]+=k; });
+  }
+  ANCHOR=month;
+}
 /* chuẩn hóa: mọi mảng alloc của mọi dự án dài đúng = số tháng (gốc của bug tổng sai) */
 function normalizeAlloc(){
   const all=pending?[...projects,pending]:projects;
@@ -1078,8 +1095,8 @@ function renderDetail(){
   document.getElementById('projRange3').textContent=fmtYM(p.start)+' → '+fmtYM(p.end);
   /* điều khiển thời gian dự án — sửa được, kéo dài sang năm sau */
   document.getElementById('timeCtl').innerHTML=
-    `<div><label style="margin-top:0">Tháng bắt đầu</label><input type="month" value="${p.start}" min="${ANCHOR}" max="2030-12" onchange="setProjStart('${p.id}',this.value)"></div>`+
-    `<div><label style="margin-top:0">Tháng kết thúc</label><input type="month" value="${p.end}" min="${ANCHOR}" max="2030-12" onchange="setProjEnd('${p.id}',this.value)"></div>`+
+    `<div><label style="margin-top:0">Tháng bắt đầu</label><input type="month" value="${p.start}" min="${FLOOR_MONTH}" max="${MAX_MONTH}" onchange="setProjStart('${p.id}',this.value)"></div>`+
+    `<div><label style="margin-top:0">Tháng kết thúc</label><input type="month" value="${p.end}" min="${FLOOR_MONTH}" max="${MAX_MONTH}" onchange="setProjEnd('${p.id}',this.value)"></div>`+
     `<button class="btn sm" onclick="extendProj('${p.id}',3)">+3 tháng</button>`+
     `<button class="btn sm" onclick="extendProj('${p.id}',12)">+1 năm</button>`;
   /* gantt động theo cửa sổ dự án */
@@ -1112,7 +1129,8 @@ function renderDetail(){
   renderAlloc(p);
 }
 function setProjStart(id,v){const p=projects.find(x=>x.id===id);
-  if(mDiff(ANCHOR,v)<0){toast('Tháng bắt đầu không thể trước mốc kế hoạch ('+fmtYM(ANCHOR)+')','warn');renderDetail();return;}
+  if(mDiff(FLOOR_MONTH,v)<0){toast('Tháng bắt đầu không thể trước '+fmtYM(FLOOR_MONTH),'warn');renderDetail();return;}
+  extendAnchorTo(v);   /* cho phép start trong quá khứ — lùi ANCHOR + reindex nếu cần */
   if(mDiff(v,p.end)<0)p.end=v;p.start=v;refreshCompany();renderDetail();markEdited(p);}
 function setProjEnd(id,v){const p=projects.find(x=>x.id===id);if(mDiff(p.start,v)<0){toast('Tháng kết thúc phải sau tháng bắt đầu','warn');renderDetail();return;}p.end=v;refreshCompany();renderDetail();markEdited(p);}
 function extendProj(id,k){const p=projects.find(x=>x.id===id);p.end=mAdd(p.end,k);refreshCompany();renderDetail();markEdited(p);toast('Đã kéo dài đến '+fmtYM(p.end)+' — nhớ bấm Lưu');}
@@ -1194,6 +1212,7 @@ function removeRoleFromProject(r){
 function pctAssigned(p,r,i){const cell=p.assign&&p.assign[r]&&p.assign[r][i];if(!cell)return 0;return Object.values(cell).reduce((a,b)=>a+(+b||0),0);}
 function renderAssign(p){
   if(!p.assign)p.assign={};
+  let outCount=0;   /* (B) số lượt gán người ở tháng role chưa khai allocation (ngoài kế hoạch) */
   const s=mDiff(ANCHOR,p.start),e=mDiff(ANCHOR,p.end);
   /* đọc theo danh sách role THAM GIA đã khai báo, không suy ngầm từ alloc>0 */
   const rlist=projRoles(p);
@@ -1225,12 +1244,15 @@ function renderAssign(p){
     h+='<div class="matrixwrap"><table class="alloc"><thead><tr><th>Tháng</th><th>Cần</th><th>Đã gán / Cần (người)</th><th style="text-align:left">Người (sửa % trực tiếp)</th></tr></thead><tbody>';
     let hasNeed=false;
     for(let i=s;i<=e;i++){
-      const need=av(p,r,i);if(need===0)continue;hasNeed=true;
+      const need=av(p,r,i);
       const cell=p.assign[r][i]||{};
       const assignedFTE=Object.values(cell).reduce((a,b)=>a+(+b||0),0)/100;  /* quy % → người */
-      /* 3 mức: thiếu (vàng) / đủ (xanh) / dư (cam) */
+      if(need===0&&assignedFTE===0)continue;       /* (B) hiện row khi CÓ nhu cầu HOẶC đã gán người */
+      hasNeed=true;
+      /* mức: ngoài KH (tím) / thiếu (vàng) / đủ (xanh) / dư (cam) */
       let cls,col;
-      if(Math.abs(assignedFTE-need)<0.001){col='var(--moss)';cls='đủ';}
+      if(need===0){col='#7C5CBF';cls='ngoài KH';outCount++;}
+      else if(Math.abs(assignedFTE-need)<0.001){col='var(--moss)';cls='đủ';}
       else if(assignedFTE<need){col='var(--idle)';cls='thiếu';}
       else{col='#C9772E';cls='dư';}
       let chips=Object.keys(cell).map(eid=>{
@@ -1252,7 +1274,32 @@ function renderAssign(p){
     if(!hasNeed)h+=`<tr><td colspan="4" style="text-align:left;color:var(--muted)">Role tham gia nhưng chưa có tháng nào cần — nhập số ở bảng phân bổ phía trên.</td></tr>`;
     h+='</tbody></table></div></div>';
   }
+  if(outCount>0){
+    h=`<div class="note warn" style="margin:0 0 14px;border-color:#7C5CBF;background:#7C5CBF12">`+
+      `<b style="color:#7C5CBF">⚠ ${outCount} lượt gán NGOÀI kế hoạch</b> — đã gán người ở tháng mà role chưa khai số ở <b>Phân bổ nguồn lực</b>. `+
+      `Chi phí những người này VẪN tính vào margin, nhưng <b>bức tranh công ty chỉ đếm theo Phân bổ</b>. `+
+      `Bấm để bơm nhu cầu role khớp người đã gán: `+
+      `<button class="btn sm" style="margin-left:6px" onclick="syncAllocFromAssign('${p.id}')">⤓ Đồng bộ phân bổ theo người đã gán</button></div>`+h;
+  }
   document.getElementById('assignBox').innerHTML=h||'<p style="color:var(--muted);font-size:13px">Dự án chưa khai báo role nào. Thêm role ở bảng phân bổ phía trên.</p>';
+}
+/* (B) Đồng bộ thủ công: bơm allocation[r][i] = max(hiện tại, số người đã gán) — ghi đè kế hoạch theo người */
+function syncAllocFromAssign(pid){
+  const p=projects.find(x=>x.id===pid); if(!p)return;
+  let bumped=0;
+  for(const r in (p.assign||{})){
+    (p.assign[r]||[]).forEach((cell,i)=>{
+      if(!cell)return;
+      const fte=Object.values(cell).reduce((a,b)=>a+(+b||0),0)/100;
+      if(fte<=0)return;
+      if(!p.alloc[r])p.alloc[r]=[];
+      const cur=+p.alloc[r][i]||0, want=Math.round(fte*100)/100;
+      if(want>cur){ p.alloc[r][i]=want; bumped++; }
+    });
+  }
+  if(!bumped){toast('Không có gì để đồng bộ — phân bổ đã ≥ người đã gán','warn');return;}
+  markEdited(p);renderAlloc(p);
+  toast(`Đã bơm phân bổ cho ${bumped} ô theo người đã gán — nhớ bấm 💾 Lưu`);
 }
 function addAssign(pid,r,i,eid){
   if(!eid)return;
@@ -1282,7 +1329,7 @@ function bulkAssign(pid,r){
   if(!eid||pct<=0){toast('Chọn người và % > 0','warn');return;}
   if(!p.assign[r])p.assign[r]=[];
   for(let i=f;i<=t;i++){
-    if(av(p,r,i)===0)continue;          /* chỉ gán vào tháng có nhu cầu role */
+    /* (B) bỏ khóa: cho gán cả tháng chưa khai allocation — sẽ hiện "ngoài kế hoạch" */
     if(!p.assign[r][i])p.assign[r][i]={};
     p.assign[r][i][eid]=Math.min(pct,100);
   }
@@ -2484,6 +2531,11 @@ async function loadFromSupabase(){
     closeNote:p.close_note||'', closedAt:p.closed_at||null,
     createdBy:p.created_by, lastEdit:(p.pm_owner||'')+' · đã lưu' }));
   const byId={}; projects.forEach(p=>byId[p.id]=p);
+
+  /* ANCHOR động = lùi về tháng bắt đầu sớm nhất (sàn FLOOR_MONTH) — chứa dự án quá khứ.
+     Đặt TRƯỚC khi monthToIdx (=mDiff(ANCHOR,...)) chạy ở phases/alloc/assign nên không cần reindex. */
+  ANCHOR=projects.reduce((a,p)=>(p.start&&mDiff(p.start,a)>0)?p.start:a, ANCHOR_DEFAULT);
+  if(mDiff(FLOOR_MONTH,ANCHOR)<0)ANCHOR=FLOOR_MONTH;
 
   /* --- phases --- */
   const {data:phs}=await sb.from('phases').select('*').order('sort_order');
