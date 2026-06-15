@@ -113,6 +113,11 @@ erDiagram
 | 🔒 rate | numeric | default 0 | monthly: triệu/tháng · hourly: nghìn/giờ |
 | active | boolean | default true | Nghỉ → false (giữ lịch sử) |
 
+> **⏭ ĐÃ CHỐT THIẾT KẾ, CHƯA BUILD (15/06/2026 — D22–D24).** Schema/views hiện tại GIỮ NGUYÊN cho tới đợt build kế tiếp. Hướng đã chốt:
+> - **D22 — lớp burn-actual:** thêm field **giờ effort thực / người / tháng** ở **tầng `assignments`** (đo hiệu quả burn). KHÔNG dùng `allocations.kind='actual'` (đó là snapshot role lúc đóng — t5). `assignments.percent` hiện = kế hoạch; burn-actual là field/lớp riêng, nullable, không ghi đè plan.
+> - **D23 — cost vs load:** `v_employee_load` (load) cho vượt 100%; còn `v_emp_cost`/`v_project_cost` cho người **fixed (monthly)** dùng **mẫu số 160 cố định, có trần = lương thật** (`cost_j = rate × giờ_j ÷ 160`, độc lập từng dự án) — vênh idle/overload đưa về **view mức công ty**, KHÔNG bịa chi phí. Hourly giữ `giờ × rate`.
+> - **D24 — rate theo thời gian:** `employees.rate` (một ô) → **lịch sử rate effective-dated** `(employee_id, rate_type, rate, hiệu_lực_từ)`, mốc theo tháng (D2). `v_emp_cost` join rate theo tháng; lớp actual **freeze** rate lúc log.
+
 ---
 
 ## 4. Data Dictionary — Bảng tham chiếu (catalog) & hệ thống

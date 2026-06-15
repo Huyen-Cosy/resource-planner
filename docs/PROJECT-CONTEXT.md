@@ -41,6 +41,12 @@ Xây **Resource Planner** — planning tool quản lý nguồn lực đa dự á
 - **✅ Tài khoản & domain (14/06/2026):** **4 tài khoản** pre-confirmed: `lethuhuyen215@gmail.com`, `ceo@idealab.app`, `bod@idealab.app` (đều role **finance** — thấy tất cả); `pm.demo@idealab.app` (role **pm** — ẩn tiền, đã verify RBAC tầng DB: finance view trả `[]`, guard ép revenue=0, không tự nâng quyền). **Mật khẩu KHÔNG ghi vào repo** — quản lý/đổi trong Supabase Auth. Tạo user mới: admin-create qua service_role (lấy tạm từ Management API `api-keys?reveal=true`) với `email_confirm:true`, role mặc định `pm` qua trigger `handle_new_user`, nâng finance bằng PATCH `app_users`. **Domain share ngoài: `idealab-planner.vercel.app`** (alias trỏ cùng deployment; `site_url` Supabase vẫn là `web-pied-iota-32.vercel.app`; đã thêm vào `uri_allow_list`). Email confirm đang **bật** → member tự đăng ký cần xác nhận email (cân nhắc tạo sẵn account hoặc bật auto-confirm khi onboard).
 
 
+- **🟦 ĐÃ CHỐT THIẾT KẾ, CHƯA BUILD (15/06/2026) — Burn / effort thực (D22–D24):** đợt phản biện PO chốt mở rộng tool: vừa planning vừa **khai báo effort thực** (giờ/người/tháng) để đo **hiệu quả burn chi phí** — *effort-thực ≠ progress-thực*, không phá D1.
+  - **D22** — 2 lớp KHÔNG ghi đè: `effort_plan` (kế hoạch, giữ nguyên vẹn) + `effort_actual` (giờ thật, nullable, đo burn). Burn-actual ở **tầng người (assignment)**, KHÔNG đụng `allocations.kind='actual'` (snapshot role của t5). Nhập ở **t3**; **t5 đổi vai** thành "nghi thức đóng" (state + bài học + snapshot role), KHÔNG bỏ. "Ưu tiên actual" chỉ là 1 view "Ước tính cuối kỳ" có nhãn, không ghi đè baseline.
+  - **D23** — tách *load* khỏi *cost*: load `Σgiờ÷160` (cho vượt 100%); cost người **lương cố định** có **trần = lương thật** (`cost_j = lương×giờ_j÷160`, độc lập từng dự án); vênh idle/overload để ở **mức công ty** (tín hiệu mềm). Hourly: `giờ×rate` không cap.
+  - **D24** — `rate` thành **effective-dated** (chuỗi theo thời gian, mốc theo tháng): plan dùng rate hiệu lực theo tháng; actual **freeze** rate lúc log.
+  - **Chưa đụng schema/views/web** — đây là bản ghi quyết định, đưa vào đợt build kế tiếp. Build sau cần: field burn-actual (assignment) + rate-history + sửa `v_emp_cost`/`v_project_cost` + UI nhập actual ở t3 + view burn & reconciliation công ty.
+
 ## 5 điều cốt lõi không được quên (chi tiết ở DECISIONS.md)
 1. **Planning tool, KHÔNG phải tracking** — không có tiến độ/chi tiêu thực, mọi thứ là kế hoạch dự kiến.
 2. **Granularity tháng × role**; gán người cụ thể là OPTIONAL (mọi thứ chạy được khi chưa gán ai).

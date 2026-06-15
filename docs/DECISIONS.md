@@ -6,6 +6,7 @@
 ## D1. Đây là PLANNING tool, không phải execution/tracking tool
 **Vì sao:** mục tiêu là lập kế hoạch nguồn lực & tài chính *dự kiến*, không theo dõi tiến độ thật. Tool tracking đòi cập nhật hằng ngày/tuần — không khả thi và không phải nhu cầu.
 **Hệ quả:** cấm mọi chỉ số đòi dữ liệu thực tế (% hoàn thành, chi tiêu tới hôm nay, mốc "hôm nay", cờ quá hạn). Mọi thứ tính từ dữ liệu kế hoạch. Đây là ranh giới dễ trôi — đã từng phải kéo lại một lần khi trang CEO lỡ thêm yếu tố execution.
+**Nới ranh giới (15/06/2026 — xem D22):** phân biệt **effort-thực ≠ progress-thực**. CHO PHÉP khai báo **giờ effort thật theo tháng** (lớp burn-actual, để đo hiệu quả chi phí). VẪN CẤM: % hoàn thành, mốc "hôm nay", cờ quá hạn, đồng hồ chi-tiêu-realtime. Lằn ranh mới: "đã bỏ ra bao nhiêu công" được; "đã xong tới đâu / đã tới hạn chưa" vẫn cấm.
 
 ## D2. Granularity: tháng × role (không theo tuần, không theo ngày)
 **Vì sao:** PM tư duy kế hoạch ở mức tháng/role; chi tiết theo tuần làm dữ liệu nhập phình gấp 4 và không thêm giá trị cho planning.
@@ -18,10 +19,12 @@
 ## D4. Rate theo CÁ NHÂN, không theo role
 **Vì sao:** senior và intern cùng role chênh lương 3-4 lần; rate theo role làm mọi con số tài chính sai.
 **Hệ quả:** mỗi employee có level + rate_type (monthly/hourly) + rate. Có level_rate gợi ý khi tạo nhanh. Hourly quy đổi 160h/tháng. Gán senior hay junior vào dự án thay đổi margin ngay — thành công cụ cân nhắc biên lợi nhuận.
+**Bổ sung (15/06/2026):** (1) **D23** — khi tính chi phí từ giờ effort, **tách "load" khỏi "cost"**: load `Σgiờ÷160` cho vượt 100% (đo overload); cost người fixed có **trần = lương thật** (mẫu số 160 cố định/dự án, vênh idle/overload để ở mức công ty). (2) **D24** — `rate` đổi từ một ô scalar sang **chuỗi theo thời gian** (effective-dated); plan dùng rate hiệu lực theo tháng, actual freeze rate lúc log.
 
 ## D5. Bỏ "effort đã bán (người-tháng)", chỉ dùng margin tiền làm thước đo lời/lỗ
 **Vì sao:** "người-tháng" là đơn vị công sức, không phải tiền; khi rate mỗi người khác nhau, cùng số người-tháng có chi phí khác hẳn → con số nửa vời, gây lăn tăn. Hợp đồng bán kết quả với giá tiền, không bán người-tháng.
 **Hệ quả:** thước đo lời/lỗ duy nhất = margin = doanh thu − tổng chi phí (rate cá nhân) − chi phí khác. (Nếu sau này cần che rate khỏi PM thì mới thêm lại "ngân sách người-tháng" — xem BACKLOG.)
+**Bổ sung (15/06/2026 — D22):** thêm chiều **burn** (cost thực vs cost kế hoạch) để đánh giá hiệu quả chi phí. KHÔNG quay lại "effort đã bán": margin tiền vẫn là thước đo lời/lỗ duy nhất; burn là chỉ số *vận hành* (kế hoạch tiêu đúng dự kiến không), tính bằng tiền (cost_actual ÷ cost_plan), không bằng người-tháng.
 
 ## D6. Danh sách role tham gia dự án khai báo TƯỜNG MINH (project.roles)
 **Vì sao:** suy ngầm "role nào có alloc>0" thì mong manh và gây bug (thêm role nhưng chưa nhập số → khối gán người không hiện). PM tư duy: chốt role tham gia trước, rồi điền số.
@@ -121,3 +124,47 @@
 **Vấn đề:** muốn gán người ở tháng role chưa khai allocation (effort cá nhân ngoài roadmap/phân bổ). Cân nhắc: thêm "cột thực tế" — **BỊ TỪ CHỐI** vì (a) vi phạm D1 (PLANNING không TRACKING — "thực tế" là tracking), (b) đụng khái niệm `allocations kind='actual'` đã dành cho luồng Đóng dự án (t5, học norms).
 **Quyết định (hướng B — PO chốt):** giữ **2 lớp** — allocation=kế hoạch role (nguồn của bức tranh công ty), assignment=lớp phủ người. **Bỏ khóa** `if(need===0)continue` ở `renderAssign` + bỏ chặn `av===0` ở `bulkAssign` → cho gán người mọi tháng trong span. Ô gán mà role chưa khai allocation → gắn nhãn **"ngoài KH"** (tím) + banner cảnh báo + nút **"⤓ Đồng bộ phân bổ theo người đã gán"** (`syncAllocFromAssign`) bơm `alloc[r][i]=max(hiện tại, Σngười)` — **ghi đè kế hoạch là hành động THỦ CÔNG, có chủ đích**, không tự động.
 **Không kéo B2/B3:** đây KHÔNG phải đồng bộ allocation↔assignment hai chiều tự động (vẫn hoãn). Chỉ mở UI + 1 nút sync một chiều thủ công. Schema KHÔNG đổi (assignments vốn không FK allocations/phases). Cost/margin: người gán ngoài KH **vẫn tính chi phí** (rate cá nhân) vào `v_project_cost`; bức tranh công ty (`computeDemand`) chỉ đếm allocation → muốn hiện thì bấm Đồng bộ. Đó là chủ ý "2 lớp".
+
+**Cập nhật (15/06/2026 — D22 nới một phần):** lúc D21 viết, "thực tế" bị hiểu là *tracking tiến độ* nên từ chối thẳng "cột thực tế". D22 phân biệt rõ **effort-thực ≠ progress-thực** và mở một lớp **burn-actual riêng ở TẦNG NGƯỜI** (giờ thực/người/tháng). Không mâu thuẫn D21: thứ D21 từ chối là nhồi "cột thực tế" vào `allocations` (đụng `kind='actual'` của t5). D22 đặt burn-actual ở **field/lớp KHÁC** tại tầng assignment; `allocations.kind='actual'` (snapshot role lúc đóng — t5) **giữ nguyên không đụng**. Tinh thần "2 lớp, không trộn" của D21 được giữ — chỉ thêm một chiều dữ liệu mới, đúng chỗ.
+
+## D22. Hệ thống vừa PLANNING vừa khai báo EFFORT THỰC — 2 lớp, KHÔNG ghi đè (15/06/2026)
+**Vấn đề:** tool cần đo **hiệu quả burn chi phí dự án** (kế hoạch tiêu vs thực tế tiêu), nhưng D1 cấm tracking. Câu hỏi PO: đã có giờ effort thật thì có cần quy ra % nữa không, và điều này thay đổi hệ thống thế nào?
+**Phán quyết PO (qua phản biện, 15/06/2026):**
+- **Phân biệt cốt lõi: effort-thực ≠ progress-thực.** D1 cấm *tracking tiến độ* (% hoàn thành, mốc "hôm nay", cờ quá hạn, đồng hồ chi-tiêu-realtime). D1 **không** cấm khai báo **giờ effort thật đã bỏ ra theo tháng**. Tool nhận vai trò thứ 2: *khai báo số liệu thực về effort* (không phải tiến độ) để đánh giá burn.
+- **Cơ chế 2 lớp, KHÔNG ghi đè** (bác phương án "actual ưu tiên ghi đè planned để tính chi phí"):
+  - `effort_plan` (lớp kế hoạch — từ allocation %/giờ) → vẽ bức tranh nguồn lực + cost kế hoạch. **Giữ nguyên vẹn**, không bị actual giẫm lên.
+  - `effort_actual` (lớp thực — giờ thật khai báo, nullable) → đo burn.
+  - **Lý do bác ghi đè:** cost kế hoạch phải thuần kế hoạch thì t0 (dư địa/what-if) và margin (D5) mới nhất quán; ghi đè làm margin thành lai plan-actual và **xóa mất delta** — mà delta (plan vs actual) chính là "hiệu quả burn" cần đo. "Ưu tiên actual" chỉ xuất hiện ở **một view tổng hợp có nhãn** kiểu *Ước tính cuối kỳ* = actual cho tháng đã qua + plan cho tháng tương lai; view đó KHÔNG đụng baseline kế hoạch bên dưới.
+- **Burn-actual đặt ở TẦNG NGƯỜI (assignment), KHÔNG đụng `allocations.kind`.** Lý do: t5 đã dùng `allocations kind='actual'` cho **snapshot role lúc đóng dự án** (per-role, một lần, vòng học norms). Burn-actual là *per-person, theo tháng, liên tục* — bản chất khác. Trộn 2 cái = tái phạm cảnh báo D21. Lưu burn-actual ở field mới tại tầng assignment (giờ thực, hoặc % thực = giờ÷160 — tương đương qua quy ước 160h/tháng D4); dạng lưu cụ thể chốt lúc build.
+- **Nhập burn-actual ở t3 (Chi tiết dự án)**, liên tục theo tháng — KHÔNG ở t5.
+- **t5 (Đóng dự án) KHÔNG bỏ — đổi vai, nhẹ đi.** t5 gộp 3 việc, chỉ 1 dời được: (a) **chuyển trạng thái** active→closed → *giải phóng demand/load*, rớt khỏi bức tranh + dư địa + what-if CEO — **không thể thay bằng nhập liệu**, phải có hành động đóng; (b) nhập số thực — *dời sang t3*; (c) `close_note` + snapshot `kind='actual'` role-level → vòng học AI (**Phase 5/BACKLOG**). Nên t5 thành **nghi thức đóng**: xem lại actual đã nhập dần ở t3 → viết bài học → bấm đóng → giải phóng capacity. Vòng học AI vẫn là BACKLOG, không kéo sớm.
+**Hệ quả (build sau):** thêm field burn-actual ở tầng assignment (schema), UI nhập ở t3, view burn = cost_actual ÷ cost_plan + view "Ước tính cuối kỳ". Nới D1 (ranh giới effort-actual), liên đới D5 (thêm chiều burn; margin vẫn là thước đo lời/lỗ). **Chưa build tại commit này — đây là bản ghi quyết định, ưu tiên đưa vào khi mở đợt build kế tiếp.**
+
+## D23. Chi phí từ effort thực: TÁCH "load" khỏi "cost", trần chi phí cho người lương cố định (15/06/2026)
+**Vấn đề:** quy đổi sẵn có là `cost = (giờ ÷ 160) × triệu/tháng` (D4). Với người **lương tháng cố định**, nếu quá tải (>160h) thì `% × tiền tháng` **đẻ ra chi phí chưa hề chi** (vd Tài 26tr/th làm 220h → ghi 35.75tr > 26tr thật trả). Cần đo được overload mà KHÔNG bịa chi phí.
+**Phán quyết PO:**
+- **Nguyên nhân gốc:** ép MỘT con số (giờ) phục vụ HAI thước đo có mẫu số khác bản chất. Giải = **tách mẫu số**, không tách dữ liệu.
+- **Load (bức tranh nguồn lực):** `Σgiờ ÷ 160`, **cho phép vượt 100%** → mới phát hiện quá tải. Giữ nguyên `v_employee_load` (Σ percent, >100 = quá tải). Không cap.
+- **Cost người HOURLY:** `giờ × rate` — **không cap**. Overload của hourly là cash thật trả thêm → đáng đội tiền.
+- **Cost người LƯƠNG THÁNG (fixed):** mỗi dự án gánh đúng phần capacity nó tiêu, **độc lập** với dự án khác:
+  ```
+  cost_dự_án_j = lương_tháng × (giờ_j ÷ 160)
+  ```
+  Chỉ phụ thuộc giờ của *chính* dự án j (đáp phản biện PO "giờ log theo dự án rồi, sao dự án này phụ thuộc dự án khác" — đúng, nên KHÔNG dùng mẫu số `max(160, Σgiờ)` vì nó tạo coupling).
+- **Khoảng vênh Σ-dự-án vs lương thật → ở MỨC CÔNG TY** (reconciliation), đối xứng 2 chiều:
+  - Σ < lương (thiếu tải): chênh dương = **chi phí nhàn rỗi/bench** (trả cho capacity không dùng). *PO chốt: thể hiện ở mức công ty, không rải vào dự án.*
+  - Σ > lương (quá tải): chênh âm = **lãi hiệu suất** (vắt nhiều hơn tiền trả) → ghi âm ở mức công ty.
+  - Nguyên tắc một câu: **dự án gánh phần capacity nó thật sự tiêu; vênh với lương thật nằm ở công ty.**
+- **Idle ở mức công ty là tín hiệu MỀM**, không đóng đinh thành dòng chi phí cứng: phân bổ % cho người fixed vốn là ước lượng, và độ tin của idle = độ đầy đủ của việc log (log thiếu → "nhàn rỗi giả"). PO đánh giá hiếm gặp, không kiểm soát quá tay.
+- Áp **cho cả lớp plan lẫn actual** y như nhau → 2 lớp so sánh được.
+**Hệ quả (build sau):** đổi `v_emp_cost`/`v_project_cost` cho nhánh fixed (mẫu số 160 cố định, không cap theo tổng), thêm dòng reconciliation idle/overload ở view mức công ty (t0). **KHÔNG vi phạm D4/D5** — rate vẫn theo cá nhân, margin vẫn thước đo lời/lỗ; chỉ làm chi phí fixed-cost trung thực với tiền thật. **Chưa build tại commit này.**
+
+## D24. Rate theo THỜI GIAN (effective-dated) + FREEZE rate trên lớp actual (15/06/2026)
+**Vấn đề:** rate/lương cá nhân đổi theo thời gian. Tài ở dự án A theo range cũ, dự án B range mới, dự án C chạy vắt qua cả hai. `employees.rate` hiện là MỘT ô scalar → không diễn tả được.
+**Phán quyết PO:**
+- **Đổi mô hình tư duy: rate KHÔNG thuộc dự án — thuộc NGƯỜI × THỜI GIAN.** Tài không có "rate của dự án A"; Tài có một *chuỗi rate*: = X tới mốc đổi, rồi = Y. Dự án nào chạy trong kỳ nào thì ăn rate kỳ đó. Dự án C vắt qua mốc → tháng trước mốc tính X, tháng sau tính Y — **tự rơi ra** vì cost vốn tính **theo từng tháng** (D2). Tổng cost dự án = Σ cost từng tháng, mỗi tháng dùng rate hiệu lực tháng đó.
+- **Rate thành effective-dated:** cần lịch sử rate `(employee_id, rate_type, rate, hiệu_lực_từ)` thay cho một ô `rate`. Mốc đổi tính **theo tháng** (D2 — không cắt giữa tháng).
+- **Plan vs Actual xử lý KHÁC nhau:**
+  - **Plan** (tháng tương lai): tra rate hiệu lực theo tháng → re-plan tự cập nhật khi lương đổi.
+  - **Actual** (giờ đã log): **đóng băng rate tại thời điểm log** = đúng tiền thật đã trả, KHÔNG bị sửa lùi khi sau này lên lương. (Chuẩn "rate card cho kế hoạch, freeze cho thực chi" — ăn khớp tinh thần 2 lớp không-ghi-đè D22.)
+**Hệ quả (build sau):** thêm lịch sử rate effective-dated (sửa `employees.rate` đơn → rate-history; cập nhật `v_emp_cost` join rate theo tháng), snapshot rate lên dòng actual lúc log. Sửa D4 (rate từ scalar → chuỗi theo thời gian). **Chưa build tại commit này.**

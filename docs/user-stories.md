@@ -62,7 +62,7 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 - **When** tôi bulk-assign người vào tháng X
 - **Then** ô hiện nhãn **"ngoài KH"** (tím) + banner "⚠ N lượt gán ngoài kế hoạch"; chi phí người đó **vẫn vào margin**, nhưng bức tranh công ty chỉ đếm theo Phân bổ.
 - **And** nút **"⤓ Đồng bộ phân bổ theo người đã gán"** bơm `alloc=max(hiện tại, Σngười)` — ghi đè kế hoạch là **thủ công, có chủ đích** (không tự động; KHÔNG phải B2/B3).
-- **Not:** KHÔNG thêm "cột thực tế" (vi phạm D1 — "thực tế" dành cho luồng Đóng dự án).
+- **Not:** KHÔNG thêm "cột thực tế" *trong allocation* (đụng `kind='actual'` của t5). *(Cập nhật 15/06 — D22: burn-actual giờ thực được phép, nhưng ở **lớp riêng tầng người**, không phải cột trong allocation; effort-thực ≠ progress-thực.)*
 
 ### US-1.6 — Khung thời gian linh hoạt (quá khứ + tương lai) ✅ `D20`
 **As a** PM, **I want** chọn tháng bắt đầu/kết thúc **tùy ý** trong quá khứ (≥2020-01) và tương lai (≤2035-12), **so that** nhập được dự án đã chạy từ trước và lập kế hoạch xa.
@@ -125,6 +125,15 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 **As a** PM/Admin, **I want** nhập số thực tế khi đóng dự án, **so that** lưu bài học cho ước lượng sau.
 - **When** tôi sửa ô lệch (prefill = estimate) + ghi close_note → Đóng
 - **Then** ghi `allocations kind='actual'` + `status='closed'`; demand/load được giải phóng; `v_estimate_vs_actual`/`v_norm_suggestions` cập nhật.
+
+### US-5.2 — Khai báo effort thực & đo burn 🔵 `D22, D23, D24` *(CHỐT THIẾT KẾ, CHƯA BUILD — 15/06/2026)*
+**As a** PM/Finance, **I want** khai báo **giờ effort thật** từng người theo tháng ngay ở t3 (Chi tiết dự án), **so that** đo được **hiệu quả burn** chi phí (thực vs kế hoạch) mà không biến tool thành tracking tiến độ.
+- **Given** dự án đang chạy, người đã gán (lớp kế hoạch `percent`)
+- **When** tôi nhập giờ thực/người/tháng (lớp burn-actual riêng, nullable)
+- **Then** cost_actual tính song song cost_plan (KHÔNG ghi đè); burn = cost_actual ÷ cost_plan; người **lương cố định** có cost trần = lương thật (D23), người hourly = giờ×rate; rate lấy theo **tháng hiệu lực** (D24, freeze lúc log).
+- **And** load (Σgiờ÷160) vẫn báo quá tải >100% mà KHÔNG bịa chi phí; vênh idle/overload của người fixed hiện ở **mức công ty**.
+- **And t5 đổi vai:** từ "trang nhập số" → **nghi thức đóng** (xem lại actual đã nhập ở t3 + bài học + snapshot role `kind='actual'` + flip `closed`). KHÔNG bỏ t5.
+- **Not:** KHÔNG % hoàn thành / mốc "hôm nay" / cờ quá hạn / đồng hồ chi-tiêu-realtime (giữ D1).
 
 ---
 
