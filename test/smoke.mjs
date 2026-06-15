@@ -42,7 +42,10 @@ const MOCK = {
       priority: 1, roles: ["DA"], start_month: "2025-10-01", end_month: "2026-04-01", status: "active" },
   ],
   v_projects_finance: [{ id: "p1", revenue: 800, other_cost: 0, mgmt_pct: 10 }],
-  phases: [],
+  phases: [
+    { project_id: "p1", name: "P1", start_month: "2025-10-01", end_month: "2025-12-01", sort_order: 1 },
+    { project_id: "p1", name: "P2", start_month: "2026-01-01", end_month: "2026-03-01", sort_order: 2 },
+  ],
   // allocation DA chỉ khai 2025-10 (1 người) — KHÔNG khai 2026-01
   allocations: [
     { project_id: "p1", role_code: "DA", month: "2025-10-01", headcount: 1, kind: "estimate" },
@@ -113,12 +116,15 @@ for (let i = 0; i < 60; i++) {
 
 // ---- Mở chi tiết dự án để chạy renderDetail/renderAlloc/renderAssign (path (B) + ANCHOR quá khứ) ----
 let detailHtml = "";
+let phaseHtml = "";
 try {
   if (typeof dom.window.openProject === "function") {
     dom.window.openProject("p1");
     await wait(200);
     const box = dom.window.document.getElementById("assignBox");
     detailHtml = box ? box.innerHTML : "";
+    const pe = dom.window.document.getElementById("phaseEdit");
+    phaseHtml = pe ? pe.innerHTML : "";
   }
 } catch (e) {
   scriptErrors.push({ detail: "openProject ném: " + e.message });
@@ -142,6 +148,10 @@ if (ok && !detailHtml) {
   fails.push("Mở chi tiết dự án nhưng assignBox rỗng.");
 } else if (ok && !detailHtml.includes("syncAllocFromAssign")) {
   fails.push("renderAssign KHÔNG phát hiện gán ngoài kế hoạch (path B có thể vỡ). assignBox len=" + detailHtml.length);
+}
+// đổi thứ tự phase: bảng phase phải render nút ▲▼ (movePhase)
+if (ok && phaseHtml && !phaseHtml.includes("movePhase")) {
+  fails.push("Bảng phase KHÔNG có nút đổi thứ tự (movePhase) — tính năng reorder có thể vỡ.");
 }
 
 if (fails.length) {

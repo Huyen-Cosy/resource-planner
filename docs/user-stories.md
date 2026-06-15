@@ -22,11 +22,12 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 - **When** tôi đặt khung tháng, thêm phase liền mạch, điền số người vào ô trong phase
 - **Then** chỉ lưu được khi phase liền mạch; ô ngoài phase bị khóa; allocation vượt deadline chỉ cảnh báo.
 
-### US-1.3 — Sửa roadmap/phase ✅ `FR-T3.2`
-**As a** PM, **I want** thêm/đổi tên/xóa phase và chỉnh tháng, **so that** roadmap phản ánh đúng giai đoạn.
+### US-1.3 — Sửa roadmap/phase (gồm đổi thứ tự) ✅ `FR-T3.2`
+**As a** PM, **I want** thêm/đổi tên/xóa/đổi thứ tự phase và chỉnh tháng, **so that** roadmap phản ánh đúng giai đoạn.
 - **Given** đang ở Chi tiết dự án
-- **When** tôi sửa tên phase / đổi tháng / bấm + Thêm phase / ✕ xóa
+- **When** tôi sửa tên phase / đổi tháng / bấm + Thêm phase / ✕ xóa / **▲▼ đổi thứ tự**
 - **Then** Gantt vẽ lại ngay; phase mới nối tiếp liền mạch; bấm Lưu là ghi xuống DB.
+- **And** (chèn phase vào giữa) bấm "+ Thêm phase" (xuất hiện ở cuối) → ▲ đưa lên vị trí mong muốn → sửa tháng. Thứ tự mảng `p.phases` → `sort_order` khi lưu; load lại đúng thứ tự. KHÔNG đổi schema.
 
 ### US-1.4 — Phân bổ nhu cầu role×tháng ✅ `FR-T3.3`
 **As a** PM, **I want** nhập/điền nhanh số người mỗi role mỗi tháng, **so that** thể hiện nhu cầu nhân sự.
