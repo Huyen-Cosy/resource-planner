@@ -21,6 +21,7 @@
 | Đặc tả gốc 8 tab + tiêu chí nghiệm thu | `docs/SPEC.md` |
 | Việc CỐ Ý hoãn (đừng làm sớm) | `docs/BACKLOG.md` |
 | Hành vi tương tác sống | `docs/mockup.html` (v17) |
+| **Nhập effort thật / phân bổ** (Lark→%, 2 tầng, resync) | `docs/effort-data-entry.md` 🟢 *LIVING* |
 
 ## Sản phẩm là gì (1 câu)
 Planning tool quản lý nguồn lực đa dự án cho công ty dịch vụ data: nhiều PM nhập kế hoạch (phase + nhu cầu role×tháng), tool tổng hợp thành bức tranh nguồn lực toàn công ty + tài chính kế hoạch, hỗ trợ CEO quyết định.
