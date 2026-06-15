@@ -1012,7 +1012,7 @@ function renderMatrix(demand){
     demand[r].forEach(d=>{
       const cap=roleCapacity(r),gap=cap-d;let cls='ok';
       if(d>0){if(gap<0)cls='short';else if(d===cap)cls='full';else if(d<cap*0.5)cls='idle';}
-      h+=`<td class="cell ${cls}">${d===0?'·':d+' / '+cap}</td>`;
+      h+=`<td class="cell ${cls}">${d===0?'·':d.toFixed(2)+' / '+cap}</td>`;
     });
     h+='</tr>';
   }
@@ -1755,7 +1755,7 @@ function renderByRole(r){
   /* hàng tổng nhu cầu role từ các dự án */
   h+='<tr style="border-top:2px solid var(--line)"><td class="role"><b>Nhu cầu role</b><small>từ các dự án</small></td>';
   const demand=computeDemand(projects);
-  months.forEach((m,i)=>{const d=demand[r]?demand[r][i]:0;h+=`<td class="cell ${d>list.length?'short':'ok'}">${d?d:'·'}</td>`;});
+  months.forEach((m,i)=>{const d=demand[r]?demand[r][i]:0;h+=`<td class="cell ${d>list.length?'short':'ok'}">${d?d.toFixed(2):'·'}</td>`;});
   h+='<td></td></tr>';
   document.getElementById('roleEmpTable').innerHTML=h+'</tbody>';
   renderTeam();
@@ -2287,7 +2287,7 @@ function buildCeoReport(){
   h+=`</tr></thead><tbody>`;
   (activeRoles.length?activeRoles:ROLES).forEach(r=>{
     h+=`<tr><td class="l">${roleName[r]||r}</td><td>${roleCapacity(r)}</td>`;
-    months.forEach((m,i)=>{const dem=demand[r][i],gap=roleCapacity(r)-dem;const cls=gap<0?'short':(gap===0&&dem>0?'full':'');h+=`<td class="${cls}">${dem?dem:'·'}</td>`;});
+    months.forEach((m,i)=>{const dem=demand[r][i],gap=roleCapacity(r)-dem;const cls=gap<0?'short':(gap===0&&dem>0?'full':'');h+=`<td class="${cls}">${dem?dem.toFixed(2):'·'}</td>`;});
     h+=`</tr>`;
   });
   h+=`</tbody></table><div class="note">Tô đỏ = thiếu người (nhu cầu &gt; năng lực) · vàng = kín (nhu cầu = năng lực).</div>`;
