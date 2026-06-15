@@ -50,6 +50,19 @@ Xây **Resource Planner** — planning tool quản lý nguồn lực đa dự á
   - **D24** — `rate` thành **effective-dated** (chuỗi theo thời gian, mốc theo tháng): plan dùng rate hiệu lực theo tháng; actual **freeze** rate lúc log.
   - **Chưa đụng schema/views/web** — đây là bản ghi quyết định, đưa vào đợt build kế tiếp. Build sau cần: field burn-actual (assignment) + rate-history + sửa `v_emp_cost`/`v_project_cost` + UI nhập actual ở t3 + view burn & reconciliation công ty.
 
+## 🔜 SESSION SAU — build D22–D24 trên `stg` (handoff + learning)
+**Trạng thái:** thiết kế D22–D24 đã chốt (DECISIONS), staging `stg` đã dựng & verify. **Chưa build code/schema burn.** Phiên sau bắt đầu từ đây.
+
+**Quy trình bắt buộc:** dựng/áp trên **`stg` trước** → verify số (cost/margin/burn) → mới áp `public`. (Đừng migrate thẳng prod — đây là lần đổi schema đầu kể từ go-live, đụng view tiền.)
+
+**Learning khi dựng `stg` (gotchas đã gặp — đừng vấp lại):**
+1. **Free-tier 2 active project/org đã đầy** → staging = **schema `stg`** trong cùng project, KHÔNG tạo project mới (sẽ đòi Pro $25/th).
+2. `audit_log.id` là **GENERATED ALWAYS identity** → `insert ... select *` phải có **`overriding system value`** (xem `db/staging.sql`).
+3. `db/views.sql` dùng **tên bảng unqualified** → tái tạo view trong stg bằng cách chạy lại views.sql dưới **`set search_path = stg, public`** (DRY, không nhân bản). `stg.is_finance()=true` → view tiền MỞ để test.
+4. Rebuild stg = idempotent: chạy `db/staging.sql` (drop+recreate+copy data) rồi views. **stg là snapshot** — sửa data prod KHÔNG tự cập nhật stg, rebuild khi cần data mới.
+
+**Việc D22–D24 cần làm (build sau):** field **burn-actual** ở `assignments` (per-person, tách `allocations.kind='actual'` của t5) · **rate-history** effective-dated (D24) · sửa **`v_emp_cost`/`v_project_cost`** (D23: mẫu số fixed-cost 160 cố định + trần lương, reconciliation idle/overload mức công ty) · view **burn** = cost_actual÷cost_plan · UI nhập actual ở **t3**, đổi vai **t5**. Tham chiếu: **DECISIONS D22–D24**, `db/README.md §Staging`, `docs/effort-data-entry.md`.
+
 ## 5 điều cốt lõi không được quên (chi tiết ở DECISIONS.md)
 1. **Planning tool, KHÔNG phải tracking** — không có tiến độ/chi tiêu thực, mọi thứ là kế hoạch dự kiến.
 2. **Granularity tháng × role**; gán người cụ thể là OPTIONAL (mọi thứ chạy được khi chưa gán ai).
