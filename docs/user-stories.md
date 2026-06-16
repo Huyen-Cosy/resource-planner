@@ -129,6 +129,7 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 
 ### US-3.7 — Xuất báo cáo ✅ `FR-T0.8`
 **As a** CEO/BOD, **I want** xuất PDF/Word, **so that** đọc/ký ngoài hệ thống.
+- Báo cáo phản ánh: KPI + bảng tài chính (margin trên **DT dự kiến**), **bảng "Tình hình thu hồi"** (thực thu/dự thu còn lại/% — D27), chi phí quản lý theo effort (tự tính), trạng thái dự án (D26), **ghi chú dự án** (D25) trong phần chi tiết.
 
 ---
 
