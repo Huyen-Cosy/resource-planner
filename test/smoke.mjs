@@ -125,6 +125,7 @@ let phaseHtml = "";
 let noteHtml = "";
 let infoHtml = "";
 let finHtml = "";
+let reportHtml = "";
 try {
   if (typeof dom.window.openProject === "function") {
     dom.window.openProject("p1");
@@ -139,6 +140,7 @@ try {
     infoHtml = pi ? pi.innerHTML : "";
     const fk = dom.window.document.getElementById("finKpis");
     finHtml = fk ? fk.innerHTML : "";
+    if (typeof dom.window.buildCeoReport === "function") reportHtml = dom.window.buildCeoReport();
   }
 } catch (e) {
   scriptErrors.push({ detail: "openProject ném: " + e.message });
@@ -182,6 +184,10 @@ if (ok && !(infoHtml.includes("setProjField") && infoHtml.includes("setProjStatu
 // thực thu / dự thu (D27): finKpis phải có KPI thực thu + đã thu 25% (200/800), margin KHÔNG đổi
 if (ok && !(finHtml.includes("thực thu") && finHtml.includes("25%"))) {
   fails.push("Card Tài chính thiếu thực thu/% đã thu (D27). finKpis=" + finHtml.slice(0, 160));
+}
+// report export phải phản ánh D27 (thu hồi) + chạy không lỗi
+if (ok && !(reportHtml.includes("Tình hình thu hồi") && reportHtml.includes("Thực thu"))) {
+  fails.push("Report export thiếu phần Thu hồi (D27). reportHtml len=" + reportHtml.length);
 }
 
 if (fails.length) {

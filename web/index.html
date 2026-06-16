@@ -2386,6 +2386,9 @@ function buildCeoReport(){
   let totRev=0,totCost=0,loss=0;
   list.forEach(p=>{totRev+=+p.revenue||0;totCost+=projTotalCost(p);if(projMargin(p)<0)loss++;});
   const totMargin=totRev-totCost;
+  /* D27 — thu hồi (cash): thực thu + dự thu còn lại */
+  let totCollected=0,totRemaining=0;
+  list.forEach(p=>{const rv=+p.revenue||0,cl=+p.revenueCollected||0;totCollected+=cl;totRemaining+=Math.max(0,rv-cl);});
   let shortCount=0;months.forEach((m,i)=>{for(const r of ROLES){if(roleCapacity(r)-demand[r][i]<0)shortCount++;}});
   const ds=new Date().toLocaleDateString('vi-VN');
   function loadIn(eid,i){let pct=0;for(const p of list)if(p.assign)for(const r in p.assign){const c=p.assign[r][i];if(c&&c[eid])pct+=+c[eid];}return pct;}
@@ -2397,9 +2400,11 @@ function buildCeoReport(){
   h+=`<h2>1. Tổng quan CEO</h2>`+
     `<div class="kpi-row">`+
     `<div class="kpi"><div class="v">${list.length}</div><div class="l">dự án</div></div>`+
-    `<div class="kpi"><div class="v">${fmtM(totRev)}</div><div class="l">tổng doanh thu</div></div>`+
+    `<div class="kpi"><div class="v">${fmtM(totRev)}</div><div class="l">tổng DT dự kiến</div></div>`+
     `<div class="kpi"><div class="v">${fmtM(totCost)}</div><div class="l">tổng chi phí</div></div>`+
     `<div class="kpi"><div class="v ${totMargin<0?'bad':'good'}">${fmtM(totMargin)}</div><div class="l">tổng margin · ${totRev?Math.round(totMargin/totRev*100):0}%</div></div>`+
+    `<div class="kpi"><div class="v">${fmtM(totCollected)}</div><div class="l">thực thu · ${totRev?Math.round(totCollected/totRev*100):0}%</div></div>`+
+    `<div class="kpi"><div class="v">${fmtM(totRemaining)}</div><div class="l">dự thu còn lại</div></div>`+
     `<div class="kpi"><div class="v ${loss?'bad':'good'}">${loss}</div><div class="l">dự án lỗ kế hoạch</div></div>`+
     `<div class="kpi"><div class="v ${shortCount?'bad':'good'}">${shortCount}</div><div class="l">lượt role-tháng thiếu</div></div>`+
     `</div>`;
@@ -2411,6 +2416,12 @@ function buildCeoReport(){
       `<td class="${mg<0?'bad':'good'}">${fmtM(mg)}</td><td class="${pct<10?'warn':'good'}">${pct}%</td></tr>`;
   });
   h+=`</tbody></table>`;
+  /* D27 — Tình hình thu hồi (cash) — TÁCH khỏi margin (lợi nhuận) */
+  h+=`<h3>Tình hình thu hồi (cash)</h3><table><thead><tr><th class="l">Dự án</th><th>DT dự kiến</th><th>Thực thu</th><th>Dự thu còn lại</th><th>% đã thu</th></tr></thead><tbody>`;
+  list.forEach(p=>{const rv=+p.revenue||0,cl=+p.revenueCollected||0,rem=Math.max(0,rv-cl),pc=rv?Math.round(cl/rv*100):0;
+    h+=`<tr><td class="l">${p.name}</td><td>${fmtM(rv)}</td><td>${fmtM(cl)}</td><td>${fmtM(rem)}${cl>rv?' (thu vượt)':''}</td><td>${pc}%</td></tr>`;});
+  h+=`<tr><td class="l"><b>Tổng</b></td><td><b>${fmtM(totRev)}</b></td><td><b>${fmtM(totCollected)}</b></td><td><b>${fmtM(totRemaining)}</b></td><td><b>${totRev?Math.round(totCollected/totRev*100):0}%</b></td></tr>`;
+  h+=`</tbody></table><div class="note">Thực thu = tiền đã thu thực tế · Dự thu còn lại = DT dự kiến − thực thu. KHÔNG ảnh hưởng margin (margin tính trên DT dự kiến).</div>`;
   const al=[];
   list.forEach(p=>{const mg=projMargin(p);if(mg<0)al.push(`<b>${p.name.split(' — ')[0]}</b> lỗ kế hoạch ${fmtM(mg)} triệu — đàm phán lại giá/scope hoặc giảm nhân sự senior`);});
   months.forEach((m,i)=>{for(const r of ROLES){const g=roleCapacity(r)-demand[r][i];if(g<0)al.push(`Thiếu <b>${Math.abs(Math.round(g*10)/10)} ${r}</b> vào ${mLabel(i)} — tuyển/thuê ngoài hoặc giãn lịch`);}});
@@ -2434,8 +2445,13 @@ function buildCeoReport(){
   list.forEach(p=>{
     const s=mDiff(ANCHOR,p.start),e=Math.min(mDiff(ANCHOR,p.end),months.length-1);
     const rev=+p.revenue||0,mg=projMargin(p),pct=rev?Math.round(mg/rev*100):0;
+    const cl=+p.revenueCollected||0,rem=Math.max(0,rev-cl),pcCol=rev?Math.round(cl/rev*100):0;
+    const st={draft:'Nháp',active:'Đang chạy',closed:'Đã đóng'}[p.status]||p.status;
     h+=`<h3>▸ ${p.name}</h3>`+
-      `<div class="note">PM ${p.pm} · ${p.type} · ${p.prio} · ${fmtYM(p.start)}→${fmtYM(p.end)} · DT ${fmtM(rev)} − tổng CP ${fmtM(projTotalCost(p))} (NS ${fmtM(projCost(p))} + mgmt ${fmtM(projMgmtCost(p))}) = margin <b class="${mg<0?'bad':'good'}">${fmtM(mg)} (${pct}%)</b></div>`;
+      `<div class="note">PM ${p.pm} · ${p.type} · ${p.prio} · ${st} · ${fmtYM(p.start)}→${fmtYM(p.end)} · DT dự kiến ${fmtM(rev)} − tổng CP ${fmtM(projTotalCost(p))} (NS ${fmtM(projCost(p))} + mgmt ${fmtM(projMgmtCost(p))}) = margin <b class="${mg<0?'bad':'good'}">${fmtM(mg)} (${pct}%)</b></div>`+
+      `<div class="note">Thu hồi: thực thu ${fmtM(cl)} / dự thu còn lại ${fmtM(rem)} · đã thu ${pcCol}%</div>`;
+    const nts=(typeof projectNotes!=='undefined'&&projectNotes[p.id])||[];
+    if(nts.length)h+=`<div class="note"><b>Ghi chú:</b> ${nts.map(n=>escHtml(n.body)).join(' · ')}</div>`;
     if(p.phases&&p.phases.length)h+=`<div class="note">Phase: ${p.phases.map(ph=>ph[0]+' ('+mLabel(ph[1])+'→'+mLabel(ph[2])+')').join(' · ')}</div>`;
     h+=`<table><thead><tr><th class="l">Phân bổ (người)</th>`;for(let i=s;i<=e;i++)h+=`<th>${mLabel(i)}</th>`;h+=`</tr></thead><tbody>`;
     projRoles(p).forEach(r=>{h+=`<tr><td class="l">${roleName[r]||r}</td>`;for(let i=s;i<=e;i++){const v=av(p,r,i);h+=`<td>${v?v:'·'}</td>`;}h+=`</tr>`;});
