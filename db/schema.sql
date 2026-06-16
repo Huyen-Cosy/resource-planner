@@ -145,6 +145,27 @@ create table if not exists assignments (
   check (extract(day from month)=1)
 );
 
+-- Ghi chú dự án (free-text). Mọi user (pm & finance) đều tạo/sửa/xóa được — KHÔNG nhạy cảm tài chính.
+-- KHÔNG phải tracking tiến độ (D1): đây chỉ là sổ ghi chú kế hoạch/thông tin của dự án, không có % hoàn thành/mốc hôm nay.
+create table if not exists project_notes (
+  id         uuid primary key default gen_random_uuid(),
+  project_id uuid not null references projects(id) on delete cascade,
+  body       text not null default '',
+  author     text,                                  -- email người tạo (chỉ để hiển thị)
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- updated_at tự cập nhật mỗi lần sửa
+create or replace function touch_updated_at()
+returns trigger language plpgsql as $$
+begin new.updated_at = now(); return new; end; $$;
+
+drop trigger if exists trg_project_notes_touch on project_notes;
+create trigger trg_project_notes_touch
+  before update on project_notes
+  for each row execute function touch_updated_at();
+
 -- Cấu hình AI model (Phase 5) — đưa bảng vào sớm để schema ổn định
 create table if not exists app_llm_configs (
   id uuid primary key default gen_random_uuid(),
@@ -199,6 +220,7 @@ alter table projects         enable row level security;
 alter table phases           enable row level security;
 alter table allocations      enable row level security;
 alter table assignments      enable row level security;
+alter table project_notes    enable row level security;
 alter table app_llm_configs  enable row level security;
 alter table audit_log        enable row level security;
 
@@ -234,6 +256,10 @@ grant select, insert, update, delete on phases, allocations, assignments to auth
 create policy phase_rw  on phases      for all to authenticated using (true) with check (true);
 create policy alloc_rw  on allocations for all to authenticated using (true) with check (true);
 create policy assign_rw on assignments for all to authenticated using (true) with check (true);
+
+-- project_notes: ghi chú dự án — mọi user (pm & finance) toàn quyền CRUD (không nhạy cảm tài chính)
+grant select, insert, update, delete on project_notes to authenticated;
+create policy note_rw on project_notes for all to authenticated using (true) with check (true);
 
 -- app_llm_configs: đọc authenticated, ghi finance
 grant select, insert, update, delete on app_llm_configs to authenticated;

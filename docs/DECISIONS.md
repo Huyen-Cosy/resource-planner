@@ -168,3 +168,23 @@
   - **Plan** (tháng tương lai): tra rate hiệu lực theo tháng → re-plan tự cập nhật khi lương đổi.
   - **Actual** (giờ đã log): **đóng băng rate tại thời điểm log** = đúng tiền thật đã trả, KHÔNG bị sửa lùi khi sau này lên lương. (Chuẩn "rate card cho kế hoạch, freeze cho thực chi" — ăn khớp tinh thần 2 lớp không-ghi-đè D22.)
 **Hệ quả (build sau):** thêm lịch sử rate effective-dated (sửa `employees.rate` đơn → rate-history; cập nhật `v_emp_cost` join rate theo tháng), snapshot rate lên dòng actual lúc log. Sửa D4 (rate từ scalar → chuỗi theo thời gian). **Chưa build tại commit này.**
+
+## D25. Ghi chú dự án — sổ free-text, mọi user CRUD, không nhạy cảm (16/06/2026)
+**Vấn đề:** cần chỗ ghi chú thông tin trên trang Chi tiết dự án (bối cảnh, rủi ro, lưu ý lập kế hoạch), cho phép **mọi user** tạo/lưu/sửa/xóa.
+**Quyết định:**
+- Thêm bảng **`project_notes`** (`id, project_id→projects CASCADE, body, author, created_at, updated_at`); trigger `touch_updated_at()` tự cập nhật `updated_at` khi UPDATE.
+- **Không nhạy cảm tài chính** → RLS `note_rw using(true) with check(true)`: **mọi authenticated (pm & finance) toàn quyền CRUD**. Đối xứng với cách `assignments` mở cho cả 2 role. KHÔNG giới hạn "chỉ tác giả sửa/xóa" (yêu cầu rõ: *mọi user đều sửa/xóa được*).
+- UI: card **"📝 Ghi chú dự án"** ở t3, đặt **ngoài** `.fin-only` để PM cũng thấy. Lưu **thẳng Supabase ngay khi bấm** (độc lập nút 💾 Lưu thay đổi dự án) — thao tác ghi chú không lẫn vào batch save roadmap/alloc/assign. `author` = email người tạo (chỉ hiển thị).
+**Không phá luật bất biến:** ghi chú là free-text **kế hoạch/thông tin**, KHÔNG phải tracking tiến độ (D1) — không có % hoàn thành/mốc hôm nay/cờ quá hạn. Không đụng tiền (D4/D5) nên mở cho mọi role hợp lệ.
+
+## D26. Vòng đời dự án đầy đủ (draft/active/closed) + sửa thông tin dự án ở t3 (16/06/2026)
+**Vấn đề:** (1) `projects.status` đã có sẵn 'draft'/'active'/'closed' ở schema nhưng **app không có đường tạo draft** (mọi luồng tạo đều set 'active' — B9 hoãn vòng đời draft); hệ quả dropdown "Gồm cả dự án nháp" ở Tổng quan CEO **vô dụng** (không có draft nào). (2) Thông tin nhập ở trang Tạo dự án (tên, PM, ưu tiên, loại) **không sửa được** sau khi tạo.
+**Phản biện PO — `status` không phải nhãn trơ:** nó lái toàn bộ tính toán (`computeDemand`, KPI, dư địa, tải t7 đều lọc `status==='active'`). Nên 3 trạng thái có **hệ quả khác nhau**, không phải 3 nút ngang hàng:
+- **draft** = pipeline chưa cam kết → **rớt khỏi bức tranh công ty/demand/dư địa**, chỉ hiện ở Tổng quan CEO khi bật "Gồm cả nháp" (và báo cáo scope=all). Đây chính là *value* của dropdown CEO — sống lại khi có đường tạo draft, **không cần xóa dropdown**.
+- **active** = đã cam kết → tính vào mọi tính toán.
+- **closed** = giải phóng năng lực; có **nghi thức đóng riêng (t5)** ghi số thực tế (`allocations kind='actual'`) + bài học (`close_note`) + `closed_at` (D22).
+**Quyết định:**
+- Thêm **dropdown Trạng thái** ở card "Thông tin dự án" (t3) cho **cả 3** trạng thái. `draft↔active` tức thì (chỉ tính lại bức tranh). `→closed` qua dropdown: confirm + **nhắc dùng t5** nếu muốn lưu số thực tế/bài học; vẫn set `closed_at` (đóng "nhẹ"). **closed→active/draft (mở lại)**: đường mới — xóa `closed_at`, **giữ nguyên** `close_note` + actual đã lưu (không phá dữ liệu). t5 giữ vai trò "đóng đầy đủ".
+- Status ghi **thẳng `projects.status`/`closed_at`** ngay khi đổi (độc lập nút 💾 Lưu) — đổi trạng thái là hành động dứt khoát, không gộp vào batch save roadmap/alloc.
+- **Sửa thông tin dự án ở t3:** card editable Tên/PM/Ưu tiên/Loại (lưu qua `persistProject` sẵn có — đã ghi `name/pm_owner/priority/project_type`, chỉ thiếu ô input). Create-form vẫn mặc định tạo 'active'; cần draft thì tạo xong gạt ở t3 (tránh nhân đôi field nhập).
+**Không phá luật bất biến:** đổi nhãn trạng thái / mở lại KHÔNG thêm % hoàn thành / mốc hôm nay → vẫn PLANNING (D1). Không đụng tiền (D4/D5). B9 (vòng đời draft) coi như **promote một phần**: có đủ chuyển trạng thái thủ công, chưa làm workflow duyệt draft→active tự động.
