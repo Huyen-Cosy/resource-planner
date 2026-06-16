@@ -41,7 +41,7 @@ const MOCK = {
     { id: "p1", name: "Past Proj", project_type: "BI_DASHBOARD", pm_owner: "Test",
       priority: 1, roles: ["DA"], start_month: "2025-10-01", end_month: "2026-04-01", status: "active" },
   ],
-  v_projects_finance: [{ id: "p1", revenue: 800, other_cost: 0, mgmt_pct: 10 }],
+  v_projects_finance: [{ id: "p1", revenue: 800, other_cost: 0, mgmt_pct: 10, revenue_collected: 200 }],
   phases: [
     { project_id: "p1", name: "P1", start_month: "2025-10-01", end_month: "2025-12-01", sort_order: 1 },
     { project_id: "p1", name: "P2", start_month: "2026-01-01", end_month: "2026-03-01", sort_order: 2 },
@@ -124,6 +124,7 @@ let detailHtml = "";
 let phaseHtml = "";
 let noteHtml = "";
 let infoHtml = "";
+let finHtml = "";
 try {
   if (typeof dom.window.openProject === "function") {
     dom.window.openProject("p1");
@@ -136,6 +137,8 @@ try {
     noteHtml = nl ? nl.innerHTML : "";
     const pi = dom.window.document.getElementById("projInfoCard");
     infoHtml = pi ? pi.innerHTML : "";
+    const fk = dom.window.document.getElementById("finKpis");
+    finHtml = fk ? fk.innerHTML : "";
   }
 } catch (e) {
   scriptErrors.push({ detail: "openProject ném: " + e.message });
@@ -175,6 +178,10 @@ if (ok && !(infoHtml.includes("setProjField") && infoHtml.includes("setProjStatu
   fails.push("Card Thông tin dự án thiếu ô sửa/đổi trạng thái. projInfoCard=" + infoHtml.slice(0, 120));
 } else if (ok && !["draft", "active", "closed"].every((s) => infoHtml.includes(`value="${s}"`))) {
   fails.push("Dropdown trạng thái thiếu 1 trong draft/active/closed.");
+}
+// thực thu / dự thu (D27): finKpis phải có KPI thực thu + đã thu 25% (200/800), margin KHÔNG đổi
+if (ok && !(finHtml.includes("thực thu") && finHtml.includes("25%"))) {
+  fails.push("Card Tài chính thiếu thực thu/% đã thu (D27). finKpis=" + finHtml.slice(0, 160));
 }
 
 if (fails.length) {

@@ -427,7 +427,9 @@ body.role-pm .fin-only{display:none!important}
   <div class="card fin-only">
     <h2>Tài chính dự án <span class="tag">doanh thu vs burn chi phí kế hoạch</span></h2>
     <div class="btnrow" style="margin:0 0 12px;flex-wrap:wrap;gap:16px">
-      <div><label style="margin-top:0">Doanh thu hợp đồng (triệu)</label><input type="number" id="revInput" value="0" min="0" step="50" onchange="onRevenue(this.value)" style="width:160px"></div>
+      <div><label style="margin-top:0">Tổng doanh thu dự kiến (triệu) <span class="tag" style="font-weight:400">nuôi margin kế hoạch</span></label><input type="number" id="revInput" value="0" min="0" step="50" onchange="onRevenue(this.value)" style="width:180px"></div>
+      <div><label style="margin-top:0">Thực thu — đã thu (triệu)</label><input type="number" id="revCollectedInput" value="0" min="0" step="50" onchange="onRevenueCollected(this.value)" style="width:160px"></div>
+      <div><label style="margin-top:0">Dự thu còn lại (triệu) <span class="tag" style="font-weight:400">tự tính</span></label><div id="revRemaining" style="padding:7px 10px;border:1px dashed var(--line);border-radius:8px;background:rgba(120,120,120,.05);min-width:150px;font-weight:600">—</div></div>
       <div><label style="margin-top:0">Chi phí khác ngoài lương (triệu)</label><input type="number" id="otherCostInput" value="0" min="0" step="10" onchange="onOtherCost(this.value)" style="width:180px"></div>
     </div>
     <div style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0 0 12px;background:rgba(120,120,120,.06)">
@@ -1432,16 +1434,28 @@ function applyQF3(){
 function renderFinance(p){
   const box=document.getElementById('finKpis');if(!box)return;
   const laborCost=projCost(p),other=+p.otherCost||0,mgmt=projMgmtCost(p),cost=laborCost+other+mgmt,rev=p.revenue||0,margin=rev-cost,pct=rev?Math.round(margin/rev*100):0;
+  /* Thu hồi (cash) — TÁCH khỏi margin (lời/lỗ): chỉ đo dòng tiền đã thu. Dự thu còn lại = max(0, tổng dự kiến − thực thu) (D27) */
+  const collected=+p.revenueCollected||0, remaining=Math.max(0,rev-collected), overCollect=collected>rev,
+        pctCollected=rev?Math.round(collected/rev*100):0;
   box.innerHTML=
-    `<div class="kpi"><div class="v">${fmtM(rev)}</div><div class="l">doanh thu hợp đồng (triệu)</div></div>`+
+    `<div class="kpi"><div class="v">${fmtM(rev)}</div><div class="l">tổng doanh thu dự kiến (triệu)</div></div>`+
     `<div class="kpi"><div class="v">${fmtM(cost)}</div><div class="l">tổng chi phí (NS ${fmtM(laborCost)} + khác ${fmtM(other)} + mgmt ${fmtM(mgmt)})</div></div>`+
     `<div class="kpi ${margin<0?'bad':'good'}"><div class="v">${fmtM(margin)}</div><div class="l">margin kế hoạch (triệu)</div></div>`+
-    `<div class="kpi ${pct<10?'bad':'good'}"><div class="v">${pct}%</div><div class="l">tỷ suất margin</div></div>`;
+    `<div class="kpi ${pct<10?'bad':'good'}"><div class="v">${pct}%</div><div class="l">tỷ suất margin</div></div>`+
+    `<div class="kpi"><div class="v">${fmtM(collected)} <span style="font-size:12px;color:var(--muted)">/ ${pctCollected}%</span></div><div class="l">thực thu / đã thu</div></div>`+
+    `<div class="kpi"><div class="v">${fmtM(remaining)}</div><div class="l">dự thu còn phải thu${overCollect?' · ⚠ đã thu vượt dự kiến':''}</div></div>`;
+  /* readout "Dự thu còn lại" cạnh ô nhập */
+  const rr=document.getElementById('revRemaining');
+  if(rr)rr.innerHTML=overCollect
+    ? `0 <span style="font-weight:400;color:var(--idle);font-size:12px">(đã thu vượt +${fmtM(collected-rev)})</span>`
+    : `${fmtM(remaining)} <span style="font-weight:400;color:var(--muted);font-size:12px">· đã thu ${pctCollected}%</span>`;
   /* đồng bộ các ô nhập (không ghi đè khi user đang gõ) */
   const oc=document.getElementById('otherCostInput');
   if(oc&&document.activeElement!==oc)oc.value=other;
   const rv=document.getElementById('revInput');
   if(rv&&document.activeElement!==rv)rv.value=rev;
+  const rc=document.getElementById('revCollectedInput');
+  if(rc&&document.activeElement!==rc)rc.value=collected;
   const mg=document.getElementById('mgmtInput');
   if(mg&&document.activeElement!==mg)mg.value=(+p.mgmtPct||0);
   const ma=document.getElementById('mgmtAmt');
@@ -1509,6 +1523,8 @@ function renderCostBreakdown(p){
 }
 function onOtherCost(val){const p=projects.find(x=>x.id===cur);p.otherCost=parseFloat(String(val).replace(',','.'))||0;markEdited(p);renderFinance(p);renderProjects();refreshCompany();}
 function onRevenue(val){const p=projects.find(x=>x.id===cur);p.revenue=parseFloat(String(val).replace(',','.'))||0;markEdited(p);renderFinance(p);renderProjects();refreshCompany();renderCEO&&renderCEO();}
+/* Thực thu — KHÔNG đụng margin/bức tranh (chỉ dòng tiền), nên không refreshCompany/renderCEO */
+function onRevenueCollected(val){const p=projects.find(x=>x.id===cur);p.revenueCollected=parseFloat(String(val).replace(',','.'))||0;markEdited(p);renderFinance(p);}
 function onMgmtPct(val){const p=projects.find(x=>x.id===cur);p.mgmtPct=parseFloat(String(val).replace(',','.'))||0;markEdited(p);renderFinance(p);renderProjects();refreshCompany();}
 function renderSoldNote(p,total){
   const el=document.getElementById('soldNote');
@@ -2650,14 +2666,14 @@ async function loadFromSupabase(){
   if(pe)throw pe;
   let finMap={};
   if(IS_FINANCE){
-    const {data:pf}=await sb.from('v_projects_finance').select('id,revenue,other_cost,mgmt_pct');
-    (pf||[]).forEach(x=>finMap[x.id]={revenue:+x.revenue||0,otherCost:+x.other_cost||0,mgmtPct:+x.mgmt_pct||0});
+    const {data:pf}=await sb.from('v_projects_finance').select('id,revenue,other_cost,mgmt_pct,revenue_collected');
+    (pf||[]).forEach(x=>finMap[x.id]={revenue:+x.revenue||0,otherCost:+x.other_cost||0,mgmtPct:+x.mgmt_pct||0,revenueCollected:+x.revenue_collected||0});
   }
   projects=pubs.map(p=>({ id:p.id, name:p.name, type:p.project_type, pm:p.pm_owner,
     prio:'P'+(p.priority||3), start:String(p.start_month).slice(0,7), end:String(p.end_month).slice(0,7),
     status:p.status, roles:p.roles||[], alloc:{}, assign:{}, actual:{}, phases:[],
     revenue:finMap[p.id]?finMap[p.id].revenue:0, otherCost:finMap[p.id]?finMap[p.id].otherCost:0,
-    mgmtPct:finMap[p.id]?finMap[p.id].mgmtPct:0,
+    mgmtPct:finMap[p.id]?finMap[p.id].mgmtPct:0, revenueCollected:finMap[p.id]?finMap[p.id].revenueCollected:0,
     closeNote:p.close_note||'', closedAt:p.closed_at||null,
     createdBy:p.created_by, lastEdit:(p.pm_owner||'')+' · đã lưu' }));
   const byId={}; projects.forEach(p=>byId[p.id]=p);
@@ -2716,7 +2732,7 @@ async function persistProject(p){
   const row={ id:p.id, name:p.name, project_type:p.type||null, pm_owner:p.pm||CURRENT_USER.email,
     priority, status:p.status||'active', start_month:p.start+'-01', end_month:p.end+'-01',
     roles:p.roles||[], created_by:p.createdBy||p.pm||CURRENT_USER.email };
-  if(IS_FINANCE){ row.revenue=+p.revenue||0; row.other_cost=+p.otherCost||0; row.mgmt_pct=+p.mgmtPct||0; }
+  if(IS_FINANCE){ row.revenue=+p.revenue||0; row.other_cost=+p.otherCost||0; row.mgmt_pct=+p.mgmtPct||0; row.revenue_collected=+p.revenueCollected||0; }
   const {error:ue}=await sb.from('projects').upsert(row); if(ue)return dbErr(ue,'lưu dự án');
 
   /* phases: xóa & nạp lại */

@@ -193,3 +193,13 @@
 - Status ghi **thẳng `projects.status`/`closed_at`** ngay khi đổi (độc lập nút 💾 Lưu) — đổi trạng thái là hành động dứt khoát, không gộp vào batch save roadmap/alloc.
 - **Sửa thông tin dự án ở t3:** card editable Tên/PM/Ưu tiên/Loại (lưu qua `persistProject` sẵn có — đã ghi `name/pm_owner/priority/project_type`, chỉ thiếu ô input). Create-form vẫn mặc định tạo 'active'; cần draft thì tạo xong gạt ở t3 (tránh nhân đôi field nhập).
 **Không phá luật bất biến:** đổi nhãn trạng thái / mở lại KHÔNG thêm % hoàn thành / mốc hôm nay → vẫn PLANNING (D1). Không đụng tiền (D4/D5). B9 (vòng đời draft) coi như **promote một phần**: có đủ chuyển trạng thái thủ công, chưa làm workflow duyệt draft→active tự động.
+
+## D27. Thực thu vs Dự thu — 3 số tiền (tổng dự kiến · thực thu · dự thu còn lại) (16/06/2026)
+**Bối cảnh:** feedback anh Trung — cần phân biệt **doanh thu kế hoạch** với **tiền đã thu thực tế**, "nhìn cho chuẩn". Sau phản biện PO + D1 mới (kế hoạch ↔ thực tế), chốt mô hình **3 số, 2 ô nhập + 1 tự tính**:
+- **Tổng doanh thu dự kiến** (nhập lúc plan) = cột `projects.revenue` sẵn có (chỉ đổi nhãn, KHÔNG dời dữ liệu) → **nuôi margin kế hoạch** (D5 giữ nguyên).
+- **Thực thu** (nhập khi tiền về) = cột MỚI `projects.revenue_collected` (🔒 finance, guard chặn PM y như `revenue`).
+- **Dự thu còn lại** = `max(0, tổng dự kiến − thực thu)` — **tự tính, không lưu**. Thực thu > tổng → hiện 0 + nhãn "đã thu vượt dự kiến".
+**2 lằn ranh PO:**
+1. **Tách 2 lăng kính, KHÔNG trộn cash vào margin:** *Margin (lời/lỗ)* = tổng dự kiến − chi phí (đo lợi nhuận; chi phí phát sinh dù thu hay chưa). *Thu hồi (cash)* = thực thu/dự thu/% (đo dòng tiền). Cố ý KHÔNG tính "margin thực thu = thực thu − chi phí" vì lẫn cash với profit.
+2. **Guard D1:** chỉ lưu **con số** thu/còn-phải-thu. KHÔNG cờ "trễ thu/quá hạn/aging công nợ" (đó là tracking "trễ chưa" → tái phạm D1). Thực thu là *trạng thái tài chính*, không phải *tiến độ task* → hợp D1 mới.
+**Triển khai (đã build & lên prod 16/06):** thêm 1 cột `revenue_collected` (additive, default 0), `v_projects_finance` expose, **margin view KHÔNG đổi**. **Bỏ qua staging** (PO chốt — token AI cũng là chi phí): thay đổi thuần-cộng + margin không đụng + RLS không test được trên `stg` anyway; thay bằng verify "margin trước=sau" trên prod + round-trip ghi/đọc. UI t3: ô Tổng dự kiến / Thực thu / readout Dự thu + 2 KPI thu hồi. Cả cụm 🔒 finance-only.

@@ -53,6 +53,13 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 - **Then** `projects.status` (+ `closed_at`) ghi ngay vào Supabase; bức tranh công ty/dư địa tính lại: **Nháp** rớt khỏi bức tranh (chỉ hiện ở Tổng quan CEO khi bật "Gồm cả nháp"), **Đã đóng** giải phóng năng lực.
 - **Lưu ý:** muốn đóng kèm **số thực tế + bài học** thì dùng nút *Đóng dự án →* (t5); dropdown chỉ là đổi trạng thái nhanh. Mở lại (closed→active) giữ nguyên actual/close_note đã lưu.
 
+### US-4.4 — Thực thu vs Dự thu ✅ `D27` (feedback anh Trung)
+**As a** Finance/CEO, **I want** nhập **tiền đã thu thực tế** cạnh tổng doanh thu dự kiến, **so that** thấy được tình hình thu hồi (đã thu bao nhiêu, còn phải thu bao nhiêu) bên cạnh margin lợi nhuận.
+- **Given** ở t3 card Tài chính dự án (finance-only)
+- **When** tôi nhập **Tổng doanh thu dự kiến** và **Thực thu**
+- **Then** **Dự thu còn lại = max(0, tổng − thực thu)** tự nhảy, kèm **% đã thu**; lưu `revenue_collected` vào Supabase.
+- **Ranh giới:** *Margin (lời/lỗ)* vẫn tính trên **tổng dự kiến** (không trộn cash). Thực thu chỉ là lăng kính **dòng tiền**, KHÔNG có cờ "trễ thu/quá hạn" (giữ D1). PM không thấy (🔒).
+
 ### US-1.7 — Ghi chú dự án (mọi user) ✅ `D25`
 **As a** bất kỳ người dùng nào (pm hoặc finance), **I want** ghi chú thông tin về dự án ngay ở Chi tiết dự án, **so that** lưu lại bối cảnh/rủi ro/lưu ý kế hoạch để cả nhóm cùng đọc.
 - **Given** đang ở tab Chi tiết dự án (t3), card "📝 Ghi chú dự án"
