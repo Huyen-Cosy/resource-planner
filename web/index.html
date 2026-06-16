@@ -36,6 +36,8 @@ main{flex:1;padding:26px 32px 60px;max-width:1180px;width:100%}
 h1{font-family:'Sora',sans-serif;font-size:21px;font-weight:700;letter-spacing:-.02em}
 .pagehead .sub{color:var(--muted);font-size:13px}
 .projselect{font:inherit;font-weight:500;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;max-width:100%}
+/* Ghim header dự án (dropdown chọn + meta PM/ưu tiên/trạng thái) khi cuộn — luôn biết đang xem dự án nào */
+#t3 .pagehead{position:sticky;top:0;z-index:25;background:var(--paper);margin:-26px -32px 16px;padding:14px 32px 12px;border-bottom:1px solid var(--line)}
 section.tab{display:none}
 section.tab.show{display:block;animation:fade .18s ease}
 @keyframes fade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
@@ -159,6 +161,8 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--moss);outline-of
   main{padding:18px 14px 70px}
   .grid2,.grid3{grid-template-columns:1fr}
   h1{font-size:18px}
+  /* mobile: thanh nav ngang đã sticky ở đỉnh → bỏ ghim header dự án để khỏi đè nhau */
+  #t3 .pagehead{position:static;margin:0 0 14px;padding:0;border-bottom:none}
 }
 /* ===== Phone (đọc-trước): tinh chỉnh cho màn hẹp ===== */
 @media(max-width:560px){
