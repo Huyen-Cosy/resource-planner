@@ -3,10 +3,15 @@
 > File này ghi **lý do** đằng sau các quyết định, để session sau (Claude Chat hoặc Claude Code) không vô tình đi lùi. Mỗi mục: quyết định + vì sao + hệ quả.
 > Khi chốt quyết định mới ở bất kỳ session nào, **cập nhật file này ngay**.
 
-## D1. Đây là PLANNING tool, không phải execution/tracking tool
-**Vì sao:** mục tiêu là lập kế hoạch nguồn lực & tài chính *dự kiến*, không theo dõi tiến độ thật. Tool tracking đòi cập nhật hằng ngày/tuần — không khả thi và không phải nhu cầu.
-**Hệ quả:** cấm mọi chỉ số đòi dữ liệu thực tế (% hoàn thành, chi tiêu tới hôm nay, mốc "hôm nay", cờ quá hạn). Mọi thứ tính từ dữ liệu kế hoạch. Đây là ranh giới dễ trôi — đã từng phải kéo lại một lần khi trang CEO lỡ thêm yếu tố execution.
-**Nới ranh giới (15/06/2026 — xem D22):** phân biệt **effort-thực ≠ progress-thực**. CHO PHÉP khai báo **giờ effort thật theo tháng** (lớp burn-actual, để đo hiệu quả chi phí). VẪN CẤM: % hoàn thành, mốc "hôm nay", cờ quá hạn, đồng hồ chi-tiêu-realtime. Lằn ranh mới: "đã bỏ ra bao nhiêu công" được; "đã xong tới đâu / đã tới hạn chưa" vẫn cấm.
+## D1. Bức tranh NGUỒN LỰC: kế hoạch ↔ thực tế — KHÔNG phải tracker tiến độ task
+**Mục tiêu (cập nhật 16/06/2026 — PO chốt):** mỗi dự án nhìn được nguồn lực ở **2 lớp song song — kế hoạch (planned) và thực tế (actual)** — để so sánh, học & điều chỉnh. Tool **KHÔNG focus** vào cập nhật *tiến độ triển khai theo task*; nó focus vào **bức tranh nguồn lực** (role/người nào, bao nhiêu effort, chi phí bao nhiêu) theo **cả kế hoạch lẫn thực tế**. Do đó **cập nhật actual là cần thiết**, không còn "mọi thứ chỉ là dự kiến".
+**Vì sao vẫn KHÔNG phải execution tracker:** quản trị task/tiến độ (kiểu Jira/Asana) đòi cập nhật hằng ngày theo từng task — không khả thi & không phải nhu cầu; đó là class công cụ khác (đo *đầu ra/deliverable*), còn đây là công cụ **nguồn lực** (đo *đầu vào: công sức & chi phí*).
+**Lằn ranh CỨNG (đã dịch chỗ, vẫn sắc — đây là lớp chống đi-lùi):**
+- ✅ **CHO PHÉP — actual của NGUỒN LỰC (input):** effort thực (giờ/người/tháng), chi phí thực (burn), phân bổ thực. Cập nhật liên tục, đặt cạnh kế hoạch để so. Cơ chế build đã chốt: **D22** (burn-actual, 2 lớp KHÔNG ghi đè) · **D23** (cost-từ-effort) · **D24** (rate theo thời gian).
+- ❌ **VẪN CẤM — actual của TIẾN ĐỘ (output):** % hoàn thành theo task/deliverable, trạng thái task done/in-progress, mốc "hôm nay" áp lên task, cờ quá hạn, quản lý task/dependency, đồng hồ chi-tiêu-realtime.
+- **Một câu phân định:** *"đã bỏ ra bao nhiêu công / chi phí"* = ĐƯỢC; *"đã xong tới đâu / có trễ deadline chưa"* = CẤM.
+**Ngoài phạm vi (axis khác — không tự kéo vào):** **cash thực thu / công nợ (AR)** là *tracking dòng tiền kế toán*, KHÔNG phải actual nguồn lực → vẫn để ngoài tool trừ khi có quyết định riêng (xem thảo luận feedback anh Trung 16/06). Lần nới D1 này chỉ mở **actual effort & cost-of-effort**, KHÔNG mở cash-collection.
+**Lịch sử ranh giới:** đây là chỗ dễ trôi — từng phải kéo lại khi trang CEO lỡ thêm yếu tố execution; **15/06 (D22)** mở "effort-thực ≠ progress-thực"; **16/06** nâng "kế hoạch ↔ thực tế" thành **nguyên tắc gốc** của D1 (không còn là phụ chú của D22).
 
 ## D2. Granularity: tháng × role (không theo tuần, không theo ngày)
 **Vì sao:** PM tư duy kế hoạch ở mức tháng/role; chi tiết theo tuần làm dữ liệu nhập phình gấp 4 và không thêm giá trị cho planning.

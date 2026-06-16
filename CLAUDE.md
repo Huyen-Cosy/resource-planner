@@ -27,7 +27,7 @@
 Planning tool quản lý nguồn lực đa dự án cho công ty dịch vụ data: nhiều PM nhập kế hoạch (phase + nhu cầu role×tháng), tool tổng hợp thành bức tranh nguồn lực toàn công ty + tài chính kế hoạch, hỗ trợ CEO quyết định.
 
 ## 5 luật không được phá (vi phạm = đi lùi, xem DECISIONS.md)
-1. **PLANNING, không phải TRACKING.** Cấm % hoàn thành, chi tiêu thực tới hôm nay, mốc "hôm nay", cờ quá hạn. Mọi thứ là kế hoạch dự kiến. (D1)
+1. **Bức tranh NGUỒN LỰC: kế hoạch ↔ thực tế — KHÔNG phải tracker tiến độ task.** CHO PHÉP cập nhật **actual nguồn lực** (effort/chi phí thực) đặt cạnh kế hoạch để so. VẪN CẤM tracking *tiến độ task*: % hoàn thành, trạng thái task, mốc "hôm nay" áp lên task, cờ quá hạn. Lằn ranh: "đã bỏ ra bao nhiêu công/chi phí" = được; "đã xong tới đâu / trễ chưa" = cấm. (Cash thực thu/AR vẫn ngoài phạm vi.) (D1)
 2. **Granularity tháng × role.** Không theo tuần/ngày. (D2)
 3. **Gán người là OPTIONAL.** Mọi tính năng PHẢI chạy được khi chưa gán ai. Allocation mức role là lớp cơ bản; assignments mức cá nhân là lớp phủ thêm. (D3)
 4. **Rate theo CÁ NHÂN** (level + monthly/hourly), không theo role. **Margin tiền là thước đo lời/lỗ duy nhất** — đã bỏ "effort đã bán". (D4, D5)
