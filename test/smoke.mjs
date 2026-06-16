@@ -123,6 +123,7 @@ for (let i = 0; i < 60; i++) {
 let detailHtml = "";
 let phaseHtml = "";
 let noteHtml = "";
+let infoHtml = "";
 try {
   if (typeof dom.window.openProject === "function") {
     dom.window.openProject("p1");
@@ -133,6 +134,8 @@ try {
     phaseHtml = pe ? pe.innerHTML : "";
     const nl = dom.window.document.getElementById("noteList");
     noteHtml = nl ? nl.innerHTML : "";
+    const pi = dom.window.document.getElementById("projInfoCard");
+    infoHtml = pi ? pi.innerHTML : "";
   }
 } catch (e) {
   scriptErrors.push({ detail: "openProject ném: " + e.message });
@@ -166,6 +169,12 @@ if (ok && !noteHtml.includes("Ghi chú kiểm thử")) {
   fails.push("Card Ghi chú dự án KHÔNG render note đã load. noteList=" + noteHtml.slice(0, 120));
 } else if (ok && !(noteHtml.includes("deleteNote") && noteHtml.includes("startEditNote"))) {
   fails.push("Ghi chú thiếu nút sửa/xóa (startEditNote/deleteNote).");
+}
+// thông tin dự án editable: card phải có ô sửa (setProjField) + đổi trạng thái cả 3 (setProjStatus)
+if (ok && !(infoHtml.includes("setProjField") && infoHtml.includes("setProjStatus"))) {
+  fails.push("Card Thông tin dự án thiếu ô sửa/đổi trạng thái. projInfoCard=" + infoHtml.slice(0, 120));
+} else if (ok && !["draft", "active", "closed"].every((s) => infoHtml.includes(`value="${s}"`))) {
+  fails.push("Dropdown trạng thái thiếu 1 trong draft/active/closed.");
 }
 
 if (fails.length) {

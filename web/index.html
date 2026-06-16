@@ -377,6 +377,7 @@ body.role-pm .fin-only{display:none!important}
       <span class="sub" id="projMeta3"></span>
     </div>
   </div>
+  <div class="card" id="projInfoCard"></div>
   <div class="card">
     <h2>Roadmap theo phase <span class="tag" id="projRange3"></span></h2>
     <div id="timeCtl" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px"></div>
@@ -1101,8 +1102,10 @@ let cur='TY';
 function openProject(id){cur=id;renderDetail();go('t3');}
 function renderDetail(){
   const p=projects.find(x=>x.id===cur)||projects[0];cur=p.id;
-  document.getElementById('projSel3').innerHTML=projects.map(x=>`<option value="${x.id}" ${x.id===cur?'selected':''}>${x.name}</option>`).join('');
-  document.getElementById('projMeta3').innerHTML=`PM: ${p.pm} · ${p.prio} · <span class="badge active">Đang chạy</span> · Sửa lần cuối: ${p.lastEdit}`;
+  document.getElementById('projSel3').innerHTML=projects.map(x=>`<option value="${x.id}" ${x.id===cur?'selected':''}>${escHtml(x.name)}</option>`).join('');
+  const stBadge={active:'<span class="badge active">Đang chạy</span>',draft:'<span class="badge draft">Nháp</span>',closed:'<span class="badge closed">Đã đóng</span>'}[p.status]||'';
+  document.getElementById('projMeta3').innerHTML=`PM: ${escHtml(p.pm)} · ${p.prio} · ${stBadge} · Sửa lần cuối: ${escHtml(p.lastEdit)}`;
+  renderProjInfo(p);
   document.getElementById('projRange3').textContent=fmtYM(p.start)+' → '+fmtYM(p.end);
   /* điều khiển thời gian dự án — sửa được, kéo dài sang năm sau */
   document.getElementById('timeCtl').innerHTML=
@@ -1143,6 +1146,47 @@ function renderDetail(){
   renderAlloc(p);
   renderNotes();
 }
+/* card "Thông tin dự án" — sửa tên/PM/ưu tiên/loại/trạng thái ngay ở Chi tiết dự án */
+const STATUS_LABEL={draft:'Nháp (chưa cam kết)',active:'Đang chạy (đã cam kết)',closed:'Đã đóng'};
+function renderProjInfo(p){
+  const box=document.getElementById('projInfoCard'); if(!box)return;
+  const types=PROJECT_TYPES.slice(); if(p.type&&!types.includes(p.type))types.unshift(p.type);
+  box.innerHTML=`<h2>Thông tin dự án <span class="tag">sửa trực tiếp — nhớ bấm 💾 Lưu (trừ Trạng thái: lưu ngay)</span></h2>
+    <div class="grid3">
+      <div><label style="margin-top:0">Tên dự án</label><input type="text" value="${escHtml(p.name)}" onchange="setProjField('${p.id}','name',this.value)"></div>
+      <div><label style="margin-top:0">PM phụ trách</label><input type="text" value="${escHtml(p.pm)}" onchange="setProjField('${p.id}','pm',this.value)"></div>
+      <div><label style="margin-top:0">Mức ưu tiên</label><select onchange="setProjField('${p.id}','prio',this.value)">${[1,2,3,4,5].map(n=>`<option value="P${n}" ${p.prio==='P'+n?'selected':''}>P${n}</option>`).join('')}</select></div>
+      <div><label style="margin-top:0">Loại dự án</label><select onchange="setProjField('${p.id}','type',this.value)"><option value="">— chưa đặt —</option>${types.map(t=>`<option ${p.type===t?'selected':''}>${escHtml(t)}</option>`).join('')}</select></div>
+      <div><label style="margin-top:0">Trạng thái <span class="tag" style="font-weight:400">vòng đời dự án</span></label><select onchange="setProjStatus('${p.id}',this.value)">${Object.keys(STATUS_LABEL).map(k=>`<option value="${k}" ${p.status===k?'selected':''}>${STATUS_LABEL[k]}</option>`).join('')}</select></div>
+    </div>
+    <p class="hint" style="margin:10px 0 0"><b>Nháp</b> = chưa cam kết → KHÔNG vào bức tranh công ty/dư địa (chỉ hiện ở Tổng quan CEO khi bật "Gồm cả nháp"). <b>Đang chạy</b> = tính vào mọi tính toán. <b>Đã đóng</b> = giải phóng năng lực; muốn lưu kèm số thực tế & bài học thì dùng nút <b>Đóng dự án →</b>.</p>`;
+}
+function setProjField(id,field,val){
+  const p=projects.find(x=>x.id===id); if(!p)return;
+  if(field==='name'){ p.name=(val||'').trim()||p.name; }
+  else if(field==='pm'){ p.pm=(val||'').trim()||'?'; }
+  else if(field==='prio'){ p.prio=val; }
+  else if(field==='type'){ p.type=val||null; }
+  markEdited(p); renderDetail();
+}
+/* đổi trạng thái → ghi thẳng projects.status + closed_at (độc lập nút Lưu) */
+window.setProjStatus=async function(id,val){
+  const p=projects.find(x=>x.id===id); if(!p)return;
+  const prev=p.status; if(val===prev)return;
+  if(val==='closed'){
+    if(!confirm('Đổi trạng thái sang "Đã đóng"? Dự án sẽ rời khỏi bức tranh nguồn lực & dư địa (giải phóng năng lực).\n\nMuốn lưu kèm SỐ THỰC TẾ + bài học thì dùng nút "Đóng dự án →" (màn Đóng dự án) thay vì đổi nhanh ở đây.')){ renderDetail(); return; }
+    p.closedAt=new Date().toISOString();
+  } else {
+    if(prev==='closed'&&!confirm('Mở lại dự án đang đóng? Năng lực sẽ được tính lại vào bức tranh công ty.')){ renderDetail(); return; }
+    p.closedAt=null;
+  }
+  p.status=val;
+  const {error}=await sb.from('projects').update({status:val,closed_at:p.closedAt}).eq('id',id);
+  if(error){ p.status=prev; renderDetail(); return dbErr(error,'đổi trạng thái'); }
+  logAudit((CURRENT_USER&&CURRENT_USER.email)||p.pm||'?','đổi trạng thái '+p.name.split(' — ')[0]+' → '+val);
+  refreshCompany(); renderProjects(); if(typeof renderCEO==='function')renderCEO(); renderDetail();
+  toast('Đã đổi trạng thái sang "'+({draft:'Nháp',active:'Đang chạy',closed:'Đã đóng'}[val])+'"');
+};
 function setProjStart(id,v){const p=projects.find(x=>x.id===id);
   if(mDiff(FLOOR_MONTH,v)<0){toast('Tháng bắt đầu không thể trước '+fmtYM(FLOOR_MONTH),'warn');renderDetail();return;}
   extendAnchorTo(v);   /* cho phép start trong quá khứ — lùi ANCHOR + reindex nếu cần */

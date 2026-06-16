@@ -59,7 +59,7 @@ erDiagram
 | project_type | text | FK → `ref_project_types.code` | BI_DASHBOARD, DATA_PLATFORM… |
 | pm_owner | text | NOT NULL | Tên PM |
 | priority | int | 1–5, default 3 | P1..P5 |
-| status | text | default `active`, in (draft/active/closed/cancelled) | Đóng dự án → `closed` |
+| status | text | default `active`, in (draft/active/closed/cancelled) | **Đổi được cả vòng đời ở t3** (D26): `draft`=chưa cam kết → rớt khỏi bức tranh/demand (chỉ hiện ở Tổng quan CEO khi bật "Gồm cả nháp") · `active`=tính vào mọi tính toán · `closed`=giải phóng năng lực (nghi thức đóng đầy đủ ở t5 ghi kèm actual+`close_note`). `closed_at` set khi đóng, xóa khi mở lại. |
 | start_month | date | NOT NULL, ngày = 01 | Đầu khung |
 | end_month | date | NOT NULL, ngày = 01, ≥ start | |
 | 🔒 revenue | numeric | default 0 | Giá trị hợp đồng (triệu) |

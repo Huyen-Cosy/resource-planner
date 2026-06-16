@@ -40,6 +40,19 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 - **When** tôi bấm **💾 Lưu thay đổi dự án** (ở bất kỳ card nào)
 - **Then** roadmap + phân bổ + gán người + (tài chính nếu finance) đều ghi xuống Supabase.
 
+### US-1.8 — Sửa thông tin dự án sau khi tạo ✅ `D26`
+**As a** PM, **I want** sửa lại Tên / PM phụ trách / Mức ưu tiên / Loại dự án ngay ở Chi tiết dự án, **so that** không phải xóa-tạo-lại khi nhập sai (vd gõ nhầm tên PM).
+- **Given** dự án đã tạo, đang ở t3 card "Thông tin dự án"
+- **When** tôi sửa một ô rồi bấm **💾 Lưu thay đổi dự án**
+- **Then** thông tin được ghi xuống Supabase (`projects.name/pm_owner/priority/project_type`).
+
+### US-1.9 — Đổi trạng thái vòng đời dự án ✅ `D26`
+**As a** PM/Finance, **I want** đổi trạng thái dự án giữa **Nháp / Đang chạy / Đã đóng** ở t3, **so that** quản được toàn vòng đời (pipeline chưa cam kết → cam kết → đóng/mở lại).
+- **Given** đang ở t3 card "Thông tin dự án", dropdown Trạng thái
+- **When** tôi chọn trạng thái khác (có confirm khi đóng/mở lại)
+- **Then** `projects.status` (+ `closed_at`) ghi ngay vào Supabase; bức tranh công ty/dư địa tính lại: **Nháp** rớt khỏi bức tranh (chỉ hiện ở Tổng quan CEO khi bật "Gồm cả nháp"), **Đã đóng** giải phóng năng lực.
+- **Lưu ý:** muốn đóng kèm **số thực tế + bài học** thì dùng nút *Đóng dự án →* (t5); dropdown chỉ là đổi trạng thái nhanh. Mở lại (closed→active) giữ nguyên actual/close_note đã lưu.
+
 ### US-1.7 — Ghi chú dự án (mọi user) ✅ `D25`
 **As a** bất kỳ người dùng nào (pm hoặc finance), **I want** ghi chú thông tin về dự án ngay ở Chi tiết dự án, **so that** lưu lại bối cảnh/rủi ro/lưu ý kế hoạch để cả nhóm cùng đọc.
 - **Given** đang ở tab Chi tiết dự án (t3), card "📝 Ghi chú dự án"
