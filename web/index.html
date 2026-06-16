@@ -408,6 +408,17 @@ body.role-pm .fin-only{display:none!important}
     <div id="assignBox"></div>
     <p class="hint">Gán ai vào role nào, tháng nào, bao nhiêu %. Phần này không bắt buộc — bỏ qua nếu chỉ cần kế hoạch ở mức số lượng. Gán xong, xem tải từng người ở tab Nguồn lực cá nhân.</p>
   </div>
+  <div class="card">
+    <h2>📝 Ghi chú dự án <span class="tag">mọi người đều ghi · sửa · xóa được</span></h2>
+    <div style="margin-bottom:14px">
+      <textarea id="noteInput" rows="3" placeholder="Ghi chú thông tin về dự án (bối cảnh, rủi ro, lưu ý khi lập kế hoạch…). Mọi tài khoản đều thêm/sửa/xóa được — lưu ngay khi bấm." style="width:100%;padding:9px 11px;font-size:13px;line-height:1.5;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:inherit;resize:vertical;font-family:inherit"></textarea>
+      <div class="btnrow" style="margin-top:8px">
+        <button class="btn primary" onclick="addNote()">+ Thêm ghi chú</button>
+        <span class="hint" style="margin-left:auto;font-size:12px">Ghi chú lưu thẳng vào Supabase — độc lập với nút 💾 Lưu thay đổi dự án.</span>
+      </div>
+    </div>
+    <div id="noteList"></div>
+  </div>
   <div class="card fin-only">
     <h2>Tài chính dự án <span class="tag">doanh thu vs burn chi phí kế hoạch</span></h2>
     <div class="btnrow" style="margin:0 0 12px;flex-wrap:wrap;gap:16px">
@@ -1130,6 +1141,7 @@ function renderDetail(){
       '<p class="hint">Sửa tên/tháng phase → Gantt vẽ lại ngay. Dùng <b>▲▼</b> để đổi thứ tự — muốn chèn phase mới vào giữa: bấm "+ Thêm phase" (xuất hiện ở cuối) rồi ▲ đưa lên đúng vị trí, sửa tên/tháng. Phase là vạch mốc roadmap; allocation nhập riêng ở bảng dưới. (Đồng bộ allocation theo phase: backlog Phase 2.)</p>';
   document.getElementById('phaseEdit').innerHTML=pe;
   renderAlloc(p);
+  renderNotes();
 }
 function setProjStart(id,v){const p=projects.find(x=>x.id===id);
   if(mDiff(FLOOR_MONTH,v)<0){toast('Tháng bắt đầu không thể trước '+fmtYM(FLOOR_MONTH),'warn');renderDetail();return;}
@@ -1532,6 +1544,66 @@ let auditLog=[
   {who:'Huyên',what:'tạo dự án Thanh Yến Treasury',when:'hôm nay'}
 ];
 function logAudit(who,what){auditLog.unshift({who,what,when:'hôm nay'});if(auditLog.length>20)auditLog.pop();}
+
+/* ====== Ghi chú dự án (project_notes) — mọi user CRUD, lưu thẳng Supabase ====== */
+let projectNotes={};                 /* { projectId: [ {id,body,author,created_at,updated_at}, … ] } */
+function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtNoteTime(ts){ if(!ts)return''; const d=new Date(ts); if(isNaN(d))return''; return d.toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function renderNotes(){
+  const box=document.getElementById('noteList'); if(!box)return;
+  const list=(projectNotes[cur]||[]).slice().sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+  if(!list.length){ box.innerHTML='<p class="hint" style="margin:0">Chưa có ghi chú nào cho dự án này.</p>'; return; }
+  box.innerHTML=list.map(n=>{
+    const edited=n.updated_at&&n.created_at&&String(n.updated_at).slice(0,19)!==String(n.created_at).slice(0,19);
+    const meta=[escHtml(n.author||'?'), fmtNoteTime(n.created_at)+(edited?' · đã sửa '+fmtNoteTime(n.updated_at):'')].filter(Boolean).join(' · ');
+    return `<div class="note" data-note="${n.id}" style="margin:0 0 10px;display:flex;gap:10px;align-items:flex-start">
+      <div style="flex:1;min-width:0">
+        <div class="note-body" style="white-space:pre-wrap;word-break:break-word">${escHtml(n.body)}</div>
+        <div class="hint" style="margin:6px 0 0;font-size:11px">${meta}</div>
+      </div>
+      <div style="white-space:nowrap;display:flex;gap:4px">
+        <button class="x" onclick="startEditNote('${n.id}')" title="Sửa ghi chú" aria-label="Sửa ghi chú">✎</button>
+        <button class="x" onclick="deleteNote('${n.id}')" title="Xóa ghi chú" aria-label="Xóa ghi chú">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function addNote(){
+  const ta=document.getElementById('noteInput'); if(!ta)return;
+  const body=ta.value.trim(); if(!body){toast('Nhập nội dung ghi chú trước khi thêm','warn');return;}
+  const author=(CURRENT_USER&&CURRENT_USER.email)||'?';
+  const {data,error}=await sb.from('project_notes').insert({project_id:cur,body,author}).select('*').single();
+  if(error)return dbErr(error,'thêm ghi chú');
+  (projectNotes[cur]=projectNotes[cur]||[]).push(data);
+  ta.value=''; renderNotes(); logAudit(author,'thêm ghi chú dự án'); toast('Đã lưu ghi chú');
+}
+function startEditNote(id){
+  const n=(projectNotes[cur]||[]).find(x=>x.id===id); if(!n)return;
+  const row=document.querySelector(`[data-note="${id}"]`); if(!row)return;
+  row.innerHTML=`<div style="flex:1;min-width:0">
+      <textarea id="noteEdit_${id}" rows="3" style="width:100%;padding:9px 11px;font-size:13px;line-height:1.5;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:inherit;resize:vertical;font-family:inherit"></textarea>
+      <div class="btnrow" style="margin-top:8px">
+        <button class="btn primary sm" onclick="saveEditNote('${id}')">💾 Lưu</button>
+        <button class="btn sm" onclick="renderNotes()">Hủy</button>
+      </div>
+    </div>`;
+  const ta=document.getElementById('noteEdit_'+id); ta.value=n.body; ta.focus();
+}
+async function saveEditNote(id){
+  const ta=document.getElementById('noteEdit_'+id); if(!ta)return;
+  const body=ta.value.trim(); if(!body){toast('Ghi chú trống — dùng nút ✕ để xóa nếu muốn bỏ','warn');return;}
+  const {data,error}=await sb.from('project_notes').update({body}).eq('id',id).select('*').single();
+  if(error)return dbErr(error,'sửa ghi chú');
+  const arr=projectNotes[cur]||[]; const i=arr.findIndex(x=>x.id===id); if(i>=0)arr[i]=data;
+  renderNotes(); logAudit((CURRENT_USER&&CURRENT_USER.email)||'?','sửa ghi chú dự án'); toast('Đã cập nhật ghi chú');
+}
+async function deleteNote(id){
+  if(!confirm('Xóa ghi chú này?'))return;
+  const {error}=await sb.from('project_notes').delete().eq('id',id);
+  if(error)return dbErr(error,'xóa ghi chú');
+  projectNotes[cur]=(projectNotes[cur]||[]).filter(x=>x.id!==id);
+  renderNotes(); logAudit((CURRENT_USER&&CURRENT_USER.email)||'?','xóa ghi chú dự án'); toast('Đã xóa ghi chú');
+}
 function ceoList(){return projects.filter(p=>document.getElementById('ceoScope').value==='all'?p.status!=='closed':p.status==='active');}
 let ceoProjSel=null;   /* null = chưa init → chọn tất cả; Set các id dự án đang lọc */
 function renderCeoFilter(){
@@ -2574,6 +2646,11 @@ async function loadFromSupabase(){
 
   /* đảm bảo mảng alloc/assign đủ độ dài cho mọi role khai báo */
   projects.forEach(p=>{ (p.roles||[]).forEach(r=>{ if(!p.alloc[r])p.alloc[r]=[]; }); });
+
+  /* --- ghi chú dự án (mọi user CRUD) --- */
+  projectNotes={};
+  const {data:nts}=await sb.from('project_notes').select('*').order('created_at');
+  (nts||[]).forEach(n=>{ (projectNotes[n.project_id]=projectNotes[n.project_id]||[]).push(n); });
 
   /* --- AI models (cosmetic, Phase 5) --- */
   const {data:ms}=await sb.from('app_llm_configs').select('*').order('sort_order');

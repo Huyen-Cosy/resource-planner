@@ -56,6 +56,11 @@ const MOCK = {
     { project_id: "p1", role_code: "DA", month: "2026-01-01", employee_id: "e3", percent: 100 },
   ],
   app_llm_configs: [],
+  // ghi chú dự án — mọi user CRUD; phải render ở card "Ghi chú dự án" của t3
+  project_notes: [
+    { id: "n1", project_id: "p1", body: "Ghi chú kiểm thử", author: "test@idealab.app",
+      created_at: "2026-06-01T03:00:00Z", updated_at: "2026-06-01T03:00:00Z" },
+  ],
 };
 
 // Query builder giả: mọi method chainable, await ra {data,error}. maybeSingle/single → 1 dòng.
@@ -117,6 +122,7 @@ for (let i = 0; i < 60; i++) {
 // ---- Mở chi tiết dự án để chạy renderDetail/renderAlloc/renderAssign (path (B) + ANCHOR quá khứ) ----
 let detailHtml = "";
 let phaseHtml = "";
+let noteHtml = "";
 try {
   if (typeof dom.window.openProject === "function") {
     dom.window.openProject("p1");
@@ -125,6 +131,8 @@ try {
     detailHtml = box ? box.innerHTML : "";
     const pe = dom.window.document.getElementById("phaseEdit");
     phaseHtml = pe ? pe.innerHTML : "";
+    const nl = dom.window.document.getElementById("noteList");
+    noteHtml = nl ? nl.innerHTML : "";
   }
 } catch (e) {
   scriptErrors.push({ detail: "openProject ném: " + e.message });
@@ -152,6 +160,12 @@ if (ok && !detailHtml) {
 // đổi thứ tự phase: bảng phase phải render nút ▲▼ (movePhase)
 if (ok && phaseHtml && !phaseHtml.includes("movePhase")) {
   fails.push("Bảng phase KHÔNG có nút đổi thứ tự (movePhase) — tính năng reorder có thể vỡ.");
+}
+// ghi chú dự án: card phải render ghi chú đã load + nút sửa/xóa
+if (ok && !noteHtml.includes("Ghi chú kiểm thử")) {
+  fails.push("Card Ghi chú dự án KHÔNG render note đã load. noteList=" + noteHtml.slice(0, 120));
+} else if (ok && !(noteHtml.includes("deleteNote") && noteHtml.includes("startEditNote"))) {
+  fails.push("Ghi chú thiếu nút sửa/xóa (startEditNote/deleteNote).");
 }
 
 if (fails.length) {

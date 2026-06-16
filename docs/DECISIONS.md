@@ -168,3 +168,11 @@
   - **Plan** (tháng tương lai): tra rate hiệu lực theo tháng → re-plan tự cập nhật khi lương đổi.
   - **Actual** (giờ đã log): **đóng băng rate tại thời điểm log** = đúng tiền thật đã trả, KHÔNG bị sửa lùi khi sau này lên lương. (Chuẩn "rate card cho kế hoạch, freeze cho thực chi" — ăn khớp tinh thần 2 lớp không-ghi-đè D22.)
 **Hệ quả (build sau):** thêm lịch sử rate effective-dated (sửa `employees.rate` đơn → rate-history; cập nhật `v_emp_cost` join rate theo tháng), snapshot rate lên dòng actual lúc log. Sửa D4 (rate từ scalar → chuỗi theo thời gian). **Chưa build tại commit này.**
+
+## D25. Ghi chú dự án — sổ free-text, mọi user CRUD, không nhạy cảm (16/06/2026)
+**Vấn đề:** cần chỗ ghi chú thông tin trên trang Chi tiết dự án (bối cảnh, rủi ro, lưu ý lập kế hoạch), cho phép **mọi user** tạo/lưu/sửa/xóa.
+**Quyết định:**
+- Thêm bảng **`project_notes`** (`id, project_id→projects CASCADE, body, author, created_at, updated_at`); trigger `touch_updated_at()` tự cập nhật `updated_at` khi UPDATE.
+- **Không nhạy cảm tài chính** → RLS `note_rw using(true) with check(true)`: **mọi authenticated (pm & finance) toàn quyền CRUD**. Đối xứng với cách `assignments` mở cho cả 2 role. KHÔNG giới hạn "chỉ tác giả sửa/xóa" (yêu cầu rõ: *mọi user đều sửa/xóa được*).
+- UI: card **"📝 Ghi chú dự án"** ở t3, đặt **ngoài** `.fin-only` để PM cũng thấy. Lưu **thẳng Supabase ngay khi bấm** (độc lập nút 💾 Lưu thay đổi dự án) — thao tác ghi chú không lẫn vào batch save roadmap/alloc/assign. `author` = email người tạo (chỉ hiển thị).
+**Không phá luật bất biến:** ghi chú là free-text **kế hoạch/thông tin**, KHÔNG phải tracking tiến độ (D1) — không có % hoàn thành/mốc hôm nay/cờ quá hạn. Không đụng tiền (D4/D5) nên mở cho mọi role hợp lệ.

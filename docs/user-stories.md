@@ -40,6 +40,13 @@ Personas: **PM** (lập kế hoạch), **CEO/BOD** (`finance` — quyết địn
 - **When** tôi bấm **💾 Lưu thay đổi dự án** (ở bất kỳ card nào)
 - **Then** roadmap + phân bổ + gán người + (tài chính nếu finance) đều ghi xuống Supabase.
 
+### US-1.7 — Ghi chú dự án (mọi user) ✅ `D25`
+**As a** bất kỳ người dùng nào (pm hoặc finance), **I want** ghi chú thông tin về dự án ngay ở Chi tiết dự án, **so that** lưu lại bối cảnh/rủi ro/lưu ý kế hoạch để cả nhóm cùng đọc.
+- **Given** đang ở tab Chi tiết dự án (t3), card "📝 Ghi chú dự án"
+- **When** tôi nhập nội dung và bấm **+ Thêm ghi chú** (hoặc ✎ sửa / ✕ xóa một ghi chú đã có)
+- **Then** ghi chú được lưu/sửa/xóa **thẳng vào Supabase** (`project_notes`), hiện kèm người tạo + thời gian (đánh dấu "đã sửa" nếu chỉnh sau), và **mọi user đều thực hiện được** (không nhạy cảm tài chính).
+- **Lưu ý:** đây là sổ ghi chú kế hoạch — KHÔNG phải tracking tiến độ (D1). Độc lập với nút 💾 Lưu thay đổi dự án.
+
 ---
 
 ## EPIC 2 — Gán người & tránh quá tải (PM)
