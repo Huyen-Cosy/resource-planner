@@ -133,7 +133,7 @@ create or replace view v_employee_cost as
 -- Dự án kèm cột tài chính
 create or replace view v_projects_finance as
   select id, name, status, start_month, end_month,
-         revenue, other_cost, mgmt_pct
+         revenue, other_cost, mgmt_pct, revenue_collected
   from projects
   where is_finance();
 

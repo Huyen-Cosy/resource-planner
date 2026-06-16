@@ -97,9 +97,10 @@ create table if not exists projects (
   status           text not null default 'active' check (status in ('draft','active','closed','cancelled')),
   start_month      date not null,                -- luôn ngày 01
   end_month        date not null,
-  revenue          numeric default 0,            -- 💰 giá trị hợp đồng (triệu)
+  revenue          numeric default 0,            -- 💰 giá trị hợp đồng (triệu) = TỔNG DOANH THU DỰ KIẾN (nuôi margin kế hoạch)
   other_cost       numeric default 0,            -- 💰 chi phí khác ngoài lương (triệu)
   mgmt_pct         numeric default 0,            -- 💰 % management overhead (D16)
+  revenue_collected numeric default 0,           -- 💰 THỰC THU (đã thu thực tế, triệu). Dự thu còn lại = revenue − revenue_collected (D27). KHÔNG đụng margin (D5).
   roles            text[] default '{}',          -- danh sách role tham gia (tường minh, D6)
   created_by       text not null,
   playbook_version text,
@@ -188,9 +189,10 @@ returns trigger language plpgsql security definer set search_path = public as $$
 begin
   if not is_finance() then
     if tg_op = 'INSERT' then
-      new.revenue := 0; new.other_cost := 0; new.mgmt_pct := 0;
+      new.revenue := 0; new.other_cost := 0; new.mgmt_pct := 0; new.revenue_collected := 0;
     elsif tg_op = 'UPDATE' then
       new.revenue := old.revenue; new.other_cost := old.other_cost; new.mgmt_pct := old.mgmt_pct;
+      new.revenue_collected := old.revenue_collected;
     end if;
   end if;
   return new;
